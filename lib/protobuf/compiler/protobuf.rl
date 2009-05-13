@@ -45,14 +45,16 @@
   boolLit = ( "true" | "false" ) >mark %output_mark ;
 
   ident = ( [A-Za-z_] [A-Za-z0-9_]* )
-        >{ istart = p } %{ lastIdent = data[istart ... p] } ;
+        >{ istart = p } %{ lastIdent = data[istart ... p] }
+        @err{ expected["identifier"] };
   constant = boolLit | ident | numLit | strLit ;
 
   package = "package" WS ident ("." ident)* WS? ";"
           @{ outputS("module #{capfirst(lastIdent)}\n"); @has_package = true };
 
   reqType = ( "required" | "optional" | "repeated" )
-          >mark %outputS_mark %{ output " " };
+          >mark %outputS_mark %{ output " " }
+          @err{ expected["required|optional|repeated"] };
 
   definedType = ( "double" | "float" | "int32" | "int64" | "uint32" | "uint64" | "sint32" | "sint64" | "fixed32" | "fixed64" | "sfixed32" | "sfixed64" | "bool" | "string" | "bytes" ) >mark %{ output ":" } %output_mark ;
   userType = ( "."? ( ident - definedType ) ( "." ident )* )
@@ -69,10 +71,10 @@
 
   enum = ( "enum" WS ident WS?
     "{" @{ outputS("class #{capfirst(lastIdent)} < ::Protobuf::Enum\n"); @depth += 1; outputS("defined_in __FILE__\n"); }
-    ( WS? ( enumField | ";" ) WS? )*
+    WS? ( ( enumField | ";" ) WS? )*
     "}" ) @{ @depth -= 1; outputS("end\n"); } ;
 
-  messageBody := ( ( WS? ( field | message | enum ) WS? )* "}" )
+  messageBody := ( WS? ( ( field | message | enum ) WS? )* "}" )
               @{ @depth -= 1;
                  outputS("end\n");
                  if @depth > 0 then fgoto messageBody ;
@@ -84,6 +86,9 @@
 }%%
 
 class ProtoFileParser
+  class ParserError < RuntimeError
+  end
+
   attr_reader :input_name, :io
 
   def initialize(input_name = nil, io = $stdout)
@@ -119,6 +124,21 @@ class ProtoFileParser
     mark = 0
     eof = -1
 
+    expected = proc do |desc|
+      lines = data.split("\n")
+      lp = p
+      line = 0
+      (lp -= lines[line].length + 1; line += 1) while lines[line].length < lp
+      if desc
+        str = "\n#{line}:error: expected #{desc}\n#{lines[line]}\n"
+      else
+        str = "\n#{line}:error: parse error\n#{lines[line]}\n"
+      end
+      str += " " * lp
+      str += "^\n"
+      raise ParserError, str
+    end
+
     io.puts "# Generated file. Do not edit."
     if input_name
       io.puts "# <#{input_name}>"
@@ -132,8 +152,8 @@ class ProtoFileParser
 
     %%write exec;
 
-    if cs < %%{ write first_final; }%%
-      raise "Could not parse proto file. Syntax error? Or BUG???"
+    if cs < %%write first_final;
+      expected[nil]
     end
 
     output "end\n" if @has_package
@@ -141,6 +161,9 @@ class ProtoFileParser
 
 end
 
-ProtoFileParser.new("__DATA__").run_machine(DATA.read)
+begin
+  ProtoFileParser.new(ARGV[0]).run_machine(File.read(ARGV[0]))
+rescue ProtoFileParser::ParserError
+  puts $!.message
+end
 # ProtoFileParser.new.run_machine(File.read("/Users/bpalmer/Programming/ctriton/protobufs/manifest.proto"))
-__END__
