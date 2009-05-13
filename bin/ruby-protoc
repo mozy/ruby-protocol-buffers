@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift("#{File.dirname(__FILE__)}/../lib")
+
+require 'optparse'
+require "protobuf/compiler/protobuf"
+
+outdir = "."
+
+opts = OptionParser.new
+opts.banner = "Usage: #{opts.program_name} [options] <files>..."
+opts.on("-o", "--ruby_out", "=DST_DIR",
+        "generates ruby code in DST_DIR", "[defaults to pwd]",
+        String) { |val| outdir = val }
+opts.on_tail("-h", "--help") { puts opts; exit }
+
+rest = opts.parse(ARGV)
+filenames = rest
+
+(puts opts; exit) if filenames.empty?
+
+filenames.each do |filename|
+  contents = File.read(filename)
+  basename = File.basename(filename)
+  dst_filename = File.basename(basename, ".proto") + ".pb.rb"
+  dst_path = File.join(outdir, dst_filename)
+  File.open(dst_filename, "wb") do |file|
+    parser = ProtoFileParser.new(basename, file)
+    begin
+      parser.run_machine(contents)
+    rescue ProtoFileParser::ParserError => e
+      puts "error generating #{dst_filename}"
+      puts e.message
+      exit
+    end
+  end
+end
