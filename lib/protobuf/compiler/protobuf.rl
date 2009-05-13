@@ -146,8 +146,6 @@ class ProtoFileParser
     io.puts
     io.puts "require 'protobuf/message/message'"
     io.puts "require 'protobuf/message/enum'"
-    io.puts "require 'protobuf/message/service'"
-    io.puts "require 'protobuf/message/extend'"
     io.puts
 
     %%write exec;
@@ -160,10 +158,3 @@ class ProtoFileParser
   end
 
 end
-
-begin
-  ProtoFileParser.new(ARGV[0]).run_machine(File.read(ARGV[0]))
-rescue ProtoFileParser::ParserError
-  puts $!.message
-end
-# ProtoFileParser.new.run_machine(File.read("/Users/bpalmer/Programming/ctriton/protobufs/manifest.proto"))
