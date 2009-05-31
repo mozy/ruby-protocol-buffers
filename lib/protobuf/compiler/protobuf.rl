@@ -19,7 +19,7 @@
   }
 
   # WS includes comments too
-  WS = ( ("//" (any - "\n")* "\n") | [ \t\r\n] )+ ;
+  WS = ( ("//" (any - "\n")* "\n") | [ \t\r\n]+ )+ ;
 
   # only used by strLit
   # TODO: I'm fairly certain these escapes all translate correctly to ruby, but
