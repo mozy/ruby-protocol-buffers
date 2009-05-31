@@ -1,0 +1,5 @@
+protobuf-ruby (0.1.0) unstable; urgency=low
+
+  * First stab at packaging.
+
+ -- Brian Palmer <brian@mozy.com>  Sat, 30 May 2009 21:24:00 -0700

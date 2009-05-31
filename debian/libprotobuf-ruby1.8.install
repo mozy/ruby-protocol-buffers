@@ -1,0 +1,2 @@
+bin/ruby-protoc   /usr/bin
+lib/protobuf      /usr/lib/ruby/1.8

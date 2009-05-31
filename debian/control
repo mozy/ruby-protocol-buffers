@@ -1,0 +1,17 @@
+Source: protobuf-ruby
+Maintainer: Brian Palmer <brian@mozy.com>
+Priority: optional
+Architecture: any
+Build-Depends: debhelper (>= 4), ruby1.8, ruby1.8-dev
+
+Package: libprotobuf-ruby
+Architecture: any
+Depends: libprotobuf-ruby1.8
+Description: Ruby implementation of a compiler and runtime for Google Protocol
+ Buffers.
+
+Package: libprotobuf-ruby1.8
+Architecture: any
+Depends: protobuf
+Description: Ruby implementation of a compiler and runtime for Google Protocol
+ Buffers.
