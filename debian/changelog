@@ -1,3 +1,9 @@
+protobuf-ruby (0.1.5) unstable; urgency=low
+
+  * deb fixes and generated file missing require fix
+
+ -- Brian Palmer <brian@cerebus.bds>  Sat, 30 May 2009 22:44:14 -0600
+
 protobuf-ruby (0.1.0) unstable; urgency=low
 
   * First stab at packaging.
