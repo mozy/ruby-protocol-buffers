@@ -134,6 +134,10 @@ module Protobuf
       return self
     end
 
+    def self.parse(io)
+      self.new.parse(io)
+    end
+
     def serialize(io)
       for tag, value in @values
         next unless @set_fields[tag]
