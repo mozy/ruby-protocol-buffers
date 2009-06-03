@@ -43,6 +43,7 @@ HEADER
 
     line %{# forward declarations}
     messages.each do |message|
+      # TODO: this is wrong
       line %{class #{name([@package, message.name])} < ::Protobuf::Message; end}
     end
     enums.each do |enum|
