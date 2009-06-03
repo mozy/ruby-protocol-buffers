@@ -21,6 +21,7 @@ require 'protobuf/message/enum'
 
 HEADER
 
+    # in_namespace correctly handles the case where @package.nil?
     in_namespace("module", @package) do
       declare(descriptor.message_type, descriptor.enum_type)
 
