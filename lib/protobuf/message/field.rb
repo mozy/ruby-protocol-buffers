@@ -36,8 +36,7 @@ module Protobuf
       shift = 0
       loop do
         raise("Too many bytes when decoding varint") if shift >= 64
-        byte = io.getc
-        byte = byte.getbyte(0) rescue byte   # for 1.9
+        byte = io.getbyte
         int_val |= (byte & 0b0111_1111) << shift
         shift += 7
         # int_val -= (1 << 64) if int_val > UINT64_MAX
