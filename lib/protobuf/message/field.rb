@@ -1,5 +1,7 @@
 # TODO: types are not checked for repeated fields
 
+require 'protobuf/ext/io/getbyte'
+
 module Protobuf
   class InvalidFieldValue < StandardError; end
 
