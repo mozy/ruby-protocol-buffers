@@ -10,8 +10,11 @@ spec = Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY
   s.summary = "Ruby compiler and runtime for the google protocol buffers library. Currently includes a compiler based on protoc, as well as a highly experimental pure-ruby compiler."
 
-  s.files = FileList["{bin,lib}/**/*"].to_a
+  s.required_ruby_version = ">=1.8.6"
+
+  s.files = FileList["{bin,lib,ext}/**/*"].to_a
   s.require_path = 'lib'
+  s.extensions << 'ext/extconf.rb'
 end
 
 Rake::GemPackageTask.new(spec) do |pkg|

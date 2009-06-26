@@ -1,6 +1,6 @@
 # TODO: types are not checked for repeated fields
 
-require 'protobuf/ext/io/getbyte'
+require 'ruby_protobufs'
 
 module Protobuf
   class InvalidFieldValue < StandardError; end
@@ -15,34 +15,39 @@ module Protobuf
   end
 
   module Varint
+    # encode/decode methods defined in ext/varint.c
 
-    def self.encode(io, int_val)
-      if int_val < 0
-        # negative varints are always encoded with the full 10 bytes
-        int_val = int_val & 0xffffffff_ffffffff
-      end
-      loop do
-        byte = int_val & 0b0111_1111
-        int_val >>= 7
-        if int_val == 0
-          io << byte.chr
-          break
-        else
-          io << (byte | 0b1000_0000).chr
+    if self.methods.grep(/^encode$/).empty?
+      def self.encode(io, int_val)
+        if int_val < 0
+          # negative varints are always encoded with the full 10 bytes
+          int_val = int_val & 0xffffffff_ffffffff
+        end
+        loop do
+          byte = int_val & 0b0111_1111
+          int_val >>= 7
+          if int_val == 0
+            io << byte.chr
+            break
+          else
+            io << (byte | 0b1000_0000).chr
+          end
         end
       end
     end
 
-    def self.decode(io)
-      int_val = 0
-      shift = 0
-      loop do
-        raise("Too many bytes when decoding varint") if shift >= 64
-        byte = io.getbyte
-        int_val |= (byte & 0b0111_1111) << shift
-        shift += 7
-        # int_val -= (1 << 64) if int_val > UINT64_MAX
-        return int_val if (byte & 0b1000_0000) == 0
+    if self.methods.grep(/^decode$/).empty?
+      def self.decode(io)
+        int_val = 0
+        shift = 0
+        loop do
+          raise("Too many bytes when decoding varint") if shift >= 64
+          byte = io.getbyte
+          int_val |= (byte & 0b0111_1111) << shift
+          shift += 7
+          # int_val -= (1 << 64) if int_val > UINT64_MAX
+          return int_val if (byte & 0b1000_0000) == 0
+        end
       end
     end
 
