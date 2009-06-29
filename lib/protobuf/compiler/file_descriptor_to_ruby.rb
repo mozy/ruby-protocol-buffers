@@ -64,7 +64,7 @@ HEADER
     if !name
       yield
     else
-      line "#{type} #{capfirst(name)} #{rest}"
+      line "#{type} #{capfirst(name)}#{rest}"
       @ns.push name
       yield
       @ns.pop
@@ -103,7 +103,7 @@ HEADER
   }
 
   def dump_message(message)
-    in_namespace("class", message.name, "< ::Protobuf::Message") do
+    in_namespace("class", message.name, " < ::Protobuf::Message") do
       declare(message.nested_type, message.enum_type)
 
       line %{# nested messages} unless message.nested_type.empty?
@@ -121,12 +121,15 @@ HEADER
         end
         line fieldline
       end
+
+      line
+      line "gen_methods! # new fields ignored after this point"
     end
     line
   end
 
   def dump_enum(enum)
-    in_namespace("class", enum.name, "< ::Protobuf::Enum") do
+    in_namespace("class", enum.name, " < ::Protobuf::Enum") do
       enum.value.each do |value|
         line %{#{capfirst(value.name)} = #{value.number}}
       end

@@ -48,27 +48,66 @@ module Protobuf
       define_field(:repeated, type, name, tag, opts)
     end
 
-    def initialize(attributes = {})
-      @values = {}
-      @set_fields = {}
+    def self.gen_methods!
+      self.class_eval <<-EOF, __FILE__, __LINE__+1
+        def initialize(attributes = {})
+          @set_fields = []
 
-      for tag, field in fields
-        if field.repeated?
-          @values[tag] = []
-          @set_fields[tag] = true # repeated fields are always "set"
-        else
-          @values[tag] = field.default_value
+          #{fields.map do |tag, field|
+            if field.repeated?
+              %{@#{field.name} = []
+                @set_fields[#{tag}] = true}
+            else
+              %{@#{field.name} = #{field.default_value.inspect}}
+            end
+          end.join("\n")}
+
+          self.attributes = attributes unless attributes.empty?
         end
-      end
 
-      for name, value in attributes
-        # FIXME: lots of yucky string allocations here
+        def merge_field(tag, value, field = nil)
+          case tag
+            #{fields.map do |tag, field|
+              %{when #{tag}\n} +
+              if field.repeated?
+                %{if value.is_a?(Array)
+                    @#{field.name} += value
+                  else
+                    @#{field.name} << value
+                  end}
+              else
+                %{@#{field.name} = value
+                  @set_fields[#{tag}] = true}
+              end
+            end.join("\n")}
+          end
+        end
+      EOF
+    end
+
+    def attributes=(hash = {})
+      hash.each do |name, value|
         self.send("#{name}=", value)
       end
     end
 
+    def initialize(attributes = {})
+      @set_fields = []
+
+      fields.each do |tag, field|
+        if field.repeated?
+          self.__send__("#{field.name}=", [])
+          @set_fields[tag] = true # repeated fields are always "set"
+        else
+          self.__send__("#{field.name}=", field.default_value)
+        end
+      end
+
+      self.attributes = attributes
+    end
+
     def value_for_tag(tag)
-      @values[tag]
+      self.__send__(fields[tag].name)
     end
 
     def value_for_tag?(tag)
@@ -77,26 +116,22 @@ module Protobuf
 
     def ==(obj)
       return false unless obj.is_a?(self.class)
-      obj_values = obj.instance_variable_get(:@values)
       fields.each do |tag, field|
-        return false unless @values[tag] == obj_values[tag]
+        return false unless self.__send__(field.name) == obj.__send__(field.name)
       end
       return true
     end
 
     def clear!
-      @values.clear
+      fields.each { |tag, field| self.__send__("#{field.name}=", nil) }
     end
 
     def dup
-      values = @values.dup
-      # fix up repeated fields, we don't want to share arrays
-      fields.each do |tag, field|
-        values[tag] = values[tag].dup if field.repeated?
-      end
-
       ret = self.class.new
-      ret.instance_variable_set(:@values, values)
+      fields.each do |tag, field|
+        val = self.__send__(field.name)
+        ret.__send__("#{field.name}=", val)
+      end
       return ret
     end
 
@@ -104,14 +139,14 @@ module Protobuf
       ret = StringIO.new
       ret << "#<#{self.class.name}"
       fields.each do |tag, field|
-        ret << " #{field.name}=#{field.inspect_value(@values[tag])}"
+        ret << " #{field.name}=#{field.inspect_value(self.__send__(field.name))}"
       end
       ret << ">"
       return ret.string
     end
 
     def set_field_from_wire(tag, bytes)
-      field = self.class.fields[tag]
+      field = fields[tag]
       value = field.decode(bytes)
       merge_field(tag, value, field)
     end
@@ -119,12 +154,12 @@ module Protobuf
     def merge_field(tag, value, field = fields[tag])
       if field.repeated?
         if value.is_a?(Array)
-          @values[tag] += value
+          self.__send__("#{field.name}=", self.__send__(field.name) + value)
         else
-          @values[tag] << value
+          self.__send__(field.name) << value
         end
       else
-        @values[tag] = value
+        self.__send__("#{field.name}=", value)
         @set_fields[tag] = true
       end
     end
@@ -139,9 +174,9 @@ module Protobuf
     end
 
     def serialize(io)
-      for tag, value in @values
+      fields.each do |tag, field|
         next unless @set_fields[tag]
-        field = self.class.fields[tag]
+        value = self.__send__(field.name)
         if field.repeated?
           value.each { |v| field.serialize(io, v) }
         else

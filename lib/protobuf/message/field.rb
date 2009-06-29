@@ -95,17 +95,15 @@ module Protobuf
 
     def add_methods_to(klass)
       klass.class_eval <<-EOF, __FILE__, __LINE__+1
-        def #{name}
-          @values[#{tag}]
-        end
+        attr_reader :#{name}
       EOF
       if repeated?
         klass.class_eval <<-EOF, __FILE__, __LINE__+1
           def #{name}=(value)
             if value.nil?
-              @values[#{tag}].clear
+              @#{name}.clear
             else
-              @values[#{tag}] = value.dup
+              @#{name} = value.dup
             end
           end
         EOF
@@ -114,12 +112,12 @@ module Protobuf
           def #{name}=(value)
             if value.nil?
               @set_fields.delete(#{tag})
-              @values[#{tag}] = fields[#{tag}].default_value
+              @#{name} = fields[#{tag}].default_value
             else
               field = fields[#{tag}]
               raise ::Protobuf::InvalidFieldValue unless field.valid?(value)
               @set_fields[#{tag}] = true
-              @values[#{tag}] = value
+              @#{name} = value
             end
           end
         EOF
