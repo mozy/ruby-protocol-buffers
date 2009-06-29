@@ -17,7 +17,7 @@ module Protobuf
   module Varint
     # encode/decode methods defined in ext/varint.c
 
-    if self.methods.grep(/^encode$/).empty?
+    unless self.respond_to?(:encode)
       def self.encode(io, int_val)
         if int_val < 0
           # negative varints are always encoded with the full 10 bytes
@@ -36,7 +36,7 @@ module Protobuf
       end
     end
 
-    if self.methods.grep(/^decode$/).empty?
+    unless self.respond_to?(:decode)
       def self.decode(io)
         int_val = 0
         shift = 0
