@@ -8,16 +8,25 @@ module Protobuf
 
     def decode(io = @io, message = @message)
       until io.eof?
-        tag, wire_type = read_tag(io)
+
+        tag_int = ::Protobuf::Varint.decode(io)
+        tag = tag_int >> 3
+        wire_type = tag_int & 0b111
+
+        # BE WARNED
+        # This is ugly magic-number code. These values are defined in
+        # field.rb, but believe it or not this loop is so performance critical
+        # that just removing the stupid const lookups on each interation shaved
+        # 10% off of our decoding benchmark.
         bytes = case wire_type
-                when Protobuf::WireTypes::VARINT
-                  Protobuf::Varint.decode(io)
-                when Protobuf::WireTypes::FIXED64
+                when 0 # Protobuf::WireTypes::VARINT
+                  ::Protobuf::Varint.decode(io)
+                when 1 # Protobuf::WireTypes::FIXED64
                   io.read(8)
-                when Protobuf::WireTypes::LENGTH_DELIMITED
-                  len = Protobuf::Varint.decode(io)
+                when 2 # Protobuf::WireTypes::LENGTH_DELIMITED
+                  len = ::Protobuf::Varint.decode(io)
                   io.read(len)
-                when Protobuf::WireTypes::FIXED32
+                when 5 # Protobuf::WireTypes::FIXED32
                   io.read(4)
                 else
                   raise "Wire type unknown: #{wire_type}"
@@ -25,12 +34,6 @@ module Protobuf
         message.set_field_from_wire(tag, bytes)
       end
       return message
-    end
-
-    # returns tag, wire_type
-    def read_tag(io)
-      int_value = Protobuf::Varint.decode(io)
-      return int_value >> 3, int_value & 0b111
     end
   end
 
