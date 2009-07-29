@@ -324,6 +324,52 @@ module Protobuf
       end
     end
 
+    class FloatField < Field
+      def self.wire_type
+        Protobuf::WireTypes::FIXED32
+      end
+
+      def valid?(value)
+        value.is_a?(Float)
+      end
+
+      def default_value
+        @opts[:default] || 0.0
+      end
+
+      def serialize(io, value)
+        super
+        io.write([value].pack('e'))
+      end
+
+      def decode(bytes)
+        bytes.unpack('e').first
+      end
+    end
+
+    class DoubleField < Field
+      def self.wire_type
+        Protobuf::WireTypes::FIXED64
+      end
+
+      def valid?(value)
+        value.is_a?(Float)
+      end
+
+      def default_value
+        @opts[:default] || 0.0
+      end
+
+      def serialize(io, value)
+        super
+        io.write([value].pack('E'))
+      end
+
+      def decode(bytes)
+        bytes.unpack('E').first
+      end
+    end
+
     class BoolField < VarintField
       def serialize(io, value)
         super(io, value ? 1 : 0)
