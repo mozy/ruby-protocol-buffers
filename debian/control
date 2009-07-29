@@ -6,7 +6,7 @@ Architecture: all
 Build-Depends: debhelper (>= 4), ruby1.8, ruby1.8-dev
 
 Package: libprotobuf-ruby1.8
-Architecture: all
+Architecture: any
 Depends: ruby1.8, protobuf
 Description: Ruby implementation of a compiler and runtime for Google Protocol
  Buffers.
