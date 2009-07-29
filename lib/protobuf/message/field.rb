@@ -111,7 +111,7 @@ module Protobuf
         klass.class_eval <<-EOF, __FILE__, __LINE__+1
           def #{name}=(value)
             if value.nil?
-              @set_fields.delete(#{tag})
+              @set_fields.delete_at(#{tag})
               @#{name} = fields[#{tag}].default_value
             else
               field = fields[#{tag}]
