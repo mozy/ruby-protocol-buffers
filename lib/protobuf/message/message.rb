@@ -58,7 +58,7 @@ module Protobuf
               %{@#{field.name} = []
                 @set_fields[#{tag}] = true}
             else
-              %{@#{field.name} = #{field.default_value.inspect}}
+              %{@#{field.name} = fields[#{tag}].default_value}
             end
           end.join("\n")}
 
