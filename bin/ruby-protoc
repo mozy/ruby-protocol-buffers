@@ -2,6 +2,11 @@
 
 $LOAD_PATH.unshift("#{File.dirname(__FILE__)}/../lib")
 
+begin
+  require 'rubygems'
+rescue LoadError
+end
+
 require 'optparse'
 require 'tempfile'
 
