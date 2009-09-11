@@ -1,3 +1,9 @@
+protobuf-ruby (0.1.8) unstable; urgency=low
+
+  * support for float and double fields
+
+ -- Brian Palmer <brianp@decho.com>  Wed, 29 July 2009 16:36:15 -0600
+
 protobuf-ruby (0.1.7) unstable; urgency=low
 
   * faster runtime and some code fixes
