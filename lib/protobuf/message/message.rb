@@ -64,7 +64,11 @@ module Protobuf
 
           self.attributes = attributes unless attributes.empty?
         end
+      EOF
 
+      return if fields.empty?
+
+      self.class_eval <<-EOF, __FILE__, __LINE__+1
         def merge_field(tag, value, field = nil)
           case tag
             #{fields.map do |tag, field|
