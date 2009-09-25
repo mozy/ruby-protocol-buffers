@@ -1,3 +1,11 @@
+protobuf-ruby (0.1.10) etch; urgency=low
+
+  * Support for imports.
+  * Merge branch 'master' of git@labs.dechocorp.com:ruby-protobufs
+  * maintenance work
+
+ -- Brian Palmer <brianp@decho.com>  Fri, 25 Sep 2009 21:26:05 +0000
+
 protobuf-ruby (0.1.9) unstable; urgency=low
 
   * fix code generation outputting empty case statement (not allowed in ruby)
