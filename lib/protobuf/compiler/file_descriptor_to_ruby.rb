@@ -20,6 +20,11 @@ require 'protobuf/message/message'
 require 'protobuf/message/enum'
 
 HEADER
+    descriptor.dependency.each do |dep|
+      path = File.basename(dep, ".proto") + ".pb"
+      @io.write("begin; require '#{path}'; rescue LoadError; end\n")
+    end
+    @io.write("\n") unless descriptor.dependency.empty?
 
     # in_namespace correctly handles the case where @package.nil?
     in_namespace("module", @package) do
