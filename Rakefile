@@ -8,7 +8,7 @@ spec = Gem::Specification.new do |s|
   s.email = "brian@mozy.com"
   s.homepage = "http://todo"
   s.platform = Gem::Platform::RUBY
-  s.summary = "Ruby compiler and runtime for the google protocol buffers library. Currently includes a compiler based on protoc, as well as a highly experimental pure-ruby compiler."
+  s.summary = "Ruby compiler and runtime for the google protocol buffers library. Currently includes a compiler that utilizes protoc, as well as a highly experimental pure-ruby compiler."
 
   s.required_ruby_version = ">=1.8.6"
 
