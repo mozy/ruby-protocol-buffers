@@ -104,8 +104,8 @@ module Protobuf
           @set_fields[tag] = true # repeated fields are always "set"
         else
           self.__send__("#{field.name}=", field.default_value)
-	  @set_fields[tag] = false # hackish -- this is set by the writer
-	end
+          @set_fields[tag] = false # hackish -- this is set by the writer
+        end
       end
 
       self.attributes = attributes
