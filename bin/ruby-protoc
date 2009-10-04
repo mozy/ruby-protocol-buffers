@@ -11,7 +11,6 @@ require 'optparse'
 require 'tempfile'
 
 outdir = "."
-use_ruby = false
 include_dirs = []
 
 opts = OptionParser.new
@@ -23,8 +22,6 @@ BANNER
 opts.on("-o", "--ruby_out", "=OUT_DIR",
         "generates ruby code in OUT_DIR", "[defaults to pwd]",
         String) { |val| outdir = val }
-opts.on("-r", "--pure-ruby",
-        "generates ruby code using EXPERIMENTAL ruby parser, not recommended") { use_ruby = true }
 opts.on("-I", "--proto_path", "=PATH",
         "Specify a directory to search for includes/imports.") { |val| include_dirs << val }
 opts.on_tail("-h", "--help") { puts opts; exit }
@@ -34,43 +31,22 @@ filenames = rest
 
 (puts "Missing input file.\n\n"; puts opts; exit) if filenames.empty?
 
-if use_ruby
-  require 'protobuf/compiler/protobuf'
+require 'protobuf/compiler/file_descriptor_to_ruby'
+require 'protobuf/compiler/descriptor.pb'
 
-  filenames.each do |filename|
-    basename = File.basename(filename)
-    dst_filename = File.basename(basename, ".proto") + ".pb.rb"
-    dst_path = File.join(outdir, dst_filename)
-    contents = File.read(filename)
-    File.open(dst_filename, "wb") do |file|
-      parser = ProtoFileParser.new(basename, file)
-      begin
-        parser.run_machine(contents)
-      rescue ProtoFileParser::ParserError => e
-        puts "error generating #{dst_filename}"
-        puts e.message
-        exit
-      end
-    end
-  end
-else
-  require 'protobuf/compiler/file_descriptor_to_ruby'
-  require 'protobuf/compiler/descriptor.pb'
+protocfile = Tempfile.new("ruby-protoc")
+other_opts = ""
+include_dirs.each { |d| other_opts += " -I#{d}" }
+`protoc #{other_opts} -o#{protocfile.path} #{filenames.join(" ")}`
 
-  protocfile = Tempfile.new("ruby-protoc")
-  other_opts = ""
-  include_dirs.each { |d| other_opts += " -I#{d}" }
-  `protoc #{other_opts} -o#{protocfile.path} #{filenames.join(" ")}`
+descriptor_set = FileDescriptorSet.parse(protocfile)
+protocfile.close(true)
 
-  descriptor_set = FileDescriptorSet.parse(protocfile)
-  protocfile.close(true)
-
-  descriptor_set.file.each do |file_descriptor|
-    path = File.join(outdir,
-                     File.basename(file_descriptor.name, ".proto") + ".pb.rb")
-    File.open(path, "wb") do |file|
-      dumper = FileDescriptorToRuby.new(file_descriptor)
-      dumper.write(file)
-    end
+descriptor_set.file.each do |file_descriptor|
+  path = File.join(outdir,
+                   File.basename(file_descriptor.name, ".proto") + ".pb.rb")
+  File.open(path, "wb") do |file|
+    dumper = FileDescriptorToRuby.new(file_descriptor)
+    dumper.write(file)
   end
 end
