@@ -27,7 +27,7 @@ module Protobuf
     end
 
     def self.define_field(otype, type, name, tag, opts = {})
-      type = type.is_a?(Class) ? type : type.to_sym
+      type = type.is_a?(Module) ? type : type.to_sym
       name = name.to_sym
       tag  = tag.to_i
       raise("Field already exists for tag: #{tag}") if fields[tag]

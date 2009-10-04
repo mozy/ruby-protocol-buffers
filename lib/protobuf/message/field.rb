@@ -4,6 +4,7 @@ require 'ruby_protobufs'
 
 module Protobuf
   class InvalidFieldValue < StandardError; end
+  module Enum; end
 
   module WireTypes
     VARINT = 0
