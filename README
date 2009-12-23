@@ -1,2 +1,46 @@
-To checkout, use "git clone git@labs.dechocorp.com:ruby-protobufs.git".
-You may need to visit http://labs.dechocorp.com/my/account to set up your SSH key first.
+= Ruby Protocol Buffers
+
+Protocol Buffers are a way of encoding structured data in an efficient yet
+extensible format. Google uses Protocol Buffers for almost all of its internal
+RPC protocols and file formats.
+
+Ruby Protocol Buffers has two components: a compiler to turn .proto definitions
+into Ruby modules (extension .pb.rb), and a runtime to use protocol buffers
+defined by these modules. The compiler relies on Google's C++ based protoc
+compiler for much of the heavy lifting -- this has huge advantages in ensuring
+correctness.
+
+Simple usage example:
+
+  $ echo "package Test; message MyMessage { optional string myField = 1; }" > test.proto
+  $ ruby-protoc test.proto
+  $ irb -rtest.pb
+  > msg = Test::MyMessage.new(:myField => 'zomgkittenz')
+  => #<Test::MyMessage myField="zomgkittenz">
+  > Test::MyMessage.parse(StringIO.new(msg.to_s)) == msg
+  => true
+
+== Authors
+
+Brian Palmer (brian@mozy.com)
+
+== Installation
+
+You'll need protoc version >= 2.2 (the Google Protocol Buffer compiler)
+installed in the environment where you will be compiling protocol buffers. This
+is only needed for compiling, you don't need it installed to use the generated
+.pb.rb files.
+
+If you use RubyGems, you can install via:
+
+  $ sudo gem install ruby-protocol-buffers
+
+== Source
+
+The source is available on GitHub somewhere. Once I know where, I'll update the
+README :)
+
+== License
+
+See the LICENSE file included with the distribution for licensing and
+copyright details.
