@@ -1,8 +1,8 @@
 # TODO: types are not checked for repeated fields
 
-require 'ruby_protobufs'
+require 'protocol_buffers'
 
-module Protobuf
+module ProtocolBuffers
   class InvalidFieldValue < StandardError; end
   module Enum; end
 
@@ -77,9 +77,9 @@ module Protobuf
         klass = Field.const_get("#{type.to_s.capitalize}Field") rescue nil
         raise("Type not found: #{type}") if klass.nil?
         field = klass.new(otype, name, tag, opts)
-      elsif type.ancestors.include?(Protobuf::Enum)
+      elsif type.ancestors.include?(ProtocolBuffers::Enum)
         field = Field::EnumField.new(type, otype, name, tag, opts)
-      elsif type.ancestors.include?(Protobuf::Message)
+      elsif type.ancestors.include?(ProtocolBuffers::Message)
         field = Field::MessageField.new(type, otype, name, tag, opts)
       else
         raise("Type not found: #{type}")
@@ -116,7 +116,7 @@ module Protobuf
               @#{name} = fields[#{tag}].default_value
             else
               field = fields[#{tag}]
-              raise ::Protobuf::InvalidFieldValue unless field.valid?(value)
+              raise ::ProtocolBuffers::InvalidFieldValue unless field.valid?(value)
               @set_fields[#{tag}] = true
               @#{name} = value
             end
@@ -127,7 +127,7 @@ module Protobuf
 
     def serialize(io, value)
       # write tag
-      Protobuf::Varint.encode(io, (self.tag << 3) | self.class.wire_type)
+      ProtocolBuffers::Varint.encode(io, (self.tag << 3) | self.class.wire_type)
     end
 
     def valid?(value)
@@ -140,7 +140,7 @@ module Protobuf
 
     class BytesField < Field
       def self.wire_type
-        Protobuf::WireTypes::LENGTH_DELIMITED
+        ProtocolBuffers::WireTypes::LENGTH_DELIMITED
       end
 
       def valid?(value)
@@ -154,7 +154,7 @@ module Protobuf
       def serialize(io, value)
         super
         # encode length
-        Protobuf::Varint.encode(io, value.length)
+        ProtocolBuffers::Varint.encode(io, value.length)
         io.write(value)
       end
 
@@ -185,12 +185,12 @@ module Protobuf
 
     class VarintField < NumericField
       def self.wire_type
-        Protobuf::WireTypes::VARINT
+        ProtocolBuffers::WireTypes::VARINT
       end
 
       def serialize(io, value)
         super
-        Protobuf::Varint.encode(io, value)
+        ProtocolBuffers::Varint.encode(io, value)
       end
 
       # this isn't very symmetrical...
@@ -213,7 +213,7 @@ module Protobuf
 
     class Fixed32Field < NumericField
       def self.wire_type
-        Protobuf::WireTypes::FIXED32
+        ProtocolBuffers::WireTypes::FIXED32
       end
 
       def max
@@ -232,7 +232,7 @@ module Protobuf
 
     class Fixed64Field < NumericField
       def self.wire_type
-        Protobuf::WireTypes::FIXED64
+        ProtocolBuffers::WireTypes::FIXED64
       end
 
       def max
@@ -327,7 +327,7 @@ module Protobuf
 
     class FloatField < Field
       def self.wire_type
-        Protobuf::WireTypes::FIXED32
+        ProtocolBuffers::WireTypes::FIXED32
       end
 
       def valid?(value)
@@ -350,7 +350,7 @@ module Protobuf
 
     class DoubleField < Field
       def self.wire_type
-        Protobuf::WireTypes::FIXED64
+        ProtocolBuffers::WireTypes::FIXED64
       end
 
       def valid?(value)
@@ -416,7 +416,7 @@ module Protobuf
 
     class MessageField < Field
       def self.wire_type
-        Protobuf::WireTypes::LENGTH_DELIMITED
+        ProtocolBuffers::WireTypes::LENGTH_DELIMITED
       end
 
       def initialize(proxy_class, otype, name, tag, opts = {})
@@ -438,7 +438,7 @@ module Protobuf
         super
         string = value.to_s
         # encode length
-        Protobuf::Varint.encode(io, string.length)
+        ProtocolBuffers::Varint.encode(io, string.length)
         io.write(string)
       end
 

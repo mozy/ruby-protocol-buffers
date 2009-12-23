@@ -14,7 +14,7 @@ Simple usage example:
 
   $ echo "package Test; message MyMessage { optional string myField = 1; }" > test.proto
   $ ruby-protoc test.proto
-  $ irb -rtest.pb
+  $ irb -I./lib -rtest.pb
   > msg = Test::MyMessage.new(:myField => 'zomgkittenz')
   => #<Test::MyMessage myField="zomgkittenz">
   > Test::MyMessage.parse(StringIO.new(msg.to_s)) == msg

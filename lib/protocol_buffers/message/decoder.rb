@@ -1,4 +1,4 @@
-module Protobuf
+module ProtocolBuffers
 
   class Decoder
     def initialize(io, message)
@@ -9,7 +9,7 @@ module Protobuf
     def decode(io = @io, message = @message)
       until io.eof?
 
-        tag_int = ::Protobuf::Varint.decode(io)
+        tag_int = ::ProtocolBuffers::Varint.decode(io)
         tag = tag_int >> 3
         wire_type = tag_int & 0b111
 
@@ -19,14 +19,14 @@ module Protobuf
         # that just removing the stupid const lookups on each interation shaved
         # 10% off of our decoding benchmark.
         bytes = case wire_type
-                when 0 # Protobuf::WireTypes::VARINT
-                  ::Protobuf::Varint.decode(io)
-                when 1 # Protobuf::WireTypes::FIXED64
+                when 0 # ProtocolBuffers::WireTypes::VARINT
+                  ::ProtocolBuffers::Varint.decode(io)
+                when 1 # ProtocolBuffers::WireTypes::FIXED64
                   io.read(8)
-                when 2 # Protobuf::WireTypes::LENGTH_DELIMITED
-                  len = ::Protobuf::Varint.decode(io)
+                when 2 # ProtocolBuffers::WireTypes::LENGTH_DELIMITED
+                  len = ::ProtocolBuffers::Varint.decode(io)
                   io.read(len)
-                when 5 # Protobuf::WireTypes::FIXED32
+                when 5 # ProtocolBuffers::WireTypes::FIXED32
                   io.read(4)
                 else
                   raise "Wire type unknown: #{wire_type}"

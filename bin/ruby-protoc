@@ -31,7 +31,7 @@ filenames = rest
 
 (puts "Missing input file.\n\n"; puts opts; exit) if filenames.empty?
 
-require 'protobuf/compiler/descriptor.pb'
+require 'protocol_buffers/compiler/descriptor.pb'
 
 protocfile = Tempfile.new("ruby-protoc")
 other_opts = ""
@@ -41,7 +41,7 @@ descriptor_set = FileDescriptorSet.parse(protocfile)
 protocfile.close(true)
 
 if ruby_out
-  require 'protobuf/compiler/file_descriptor_to_ruby'
+  require 'protocol_buffers/compiler/file_descriptor_to_ruby'
 end
 
 descriptor_set.file.each do |file_descriptor|

@@ -1,10 +1,10 @@
 require 'stringio'
-require 'protobuf/message/field'
-require 'protobuf/message/decoder'
+require 'protocol_buffers/message/field'
+require 'protocol_buffers/message/decoder'
 
 # TODO: extension fields
 
-module Protobuf
+module ProtocolBuffers
   class Message
 
     def self.defined_in(fname)
@@ -170,7 +170,7 @@ module Protobuf
     end
 
     def parse(io)
-      Protobuf::Decoder.new(io, self).decode
+      ProtocolBuffers::Decoder.new(io, self).decode
       return self
     end
 
