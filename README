@@ -43,11 +43,11 @@ native extension. TODO: anybody know if we can make this optional?
 == Simple Usage Example
 
   $ echo "package Test; message MyMessage { optional string myField = 1; }" > test.proto
-  $ ruby-protoc test.proto
+  $ bin/ruby-protoc test.proto
   $ irb -I./lib -rtest.pb
   > msg = Test::MyMessage.new(:myField => 'zomgkittenz')
   => #<Test::MyMessage myField="zomgkittenz">
-  > Test::MyMessage.parse(StringIO.new(msg.to_s)) == msg
+  > Test::MyMessage.parse(msg.to_s) == msg
   => true
 
 == Authors
