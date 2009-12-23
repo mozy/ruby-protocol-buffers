@@ -1,12 +1,10 @@
-# TODO: types are not checked for repeated fields
-
 require 'protocol_buffers'
 
 module ProtocolBuffers
   class InvalidFieldValue < StandardError; end
   module Enum; end
 
-  module WireTypes
+  module WireTypes # :nodoc:
     VARINT = 0
     FIXED64 = 1
     LENGTH_DELIMITED = 2
@@ -15,7 +13,7 @@ module ProtocolBuffers
     FIXED32 = 5
   end
 
-  module Varint
+  module Varint # :nodoc:
     # encode/decode methods defined in ext/varint.c
 
     unless self.respond_to?(:encode)
@@ -67,7 +65,7 @@ module ProtocolBuffers
 
   end
 
-  class Field
+  class Field # :nodoc: all
     attr_reader :otype, :name, :tag
 
     def repeated?; otype == :repeated end
@@ -107,6 +105,8 @@ module ProtocolBuffers
               @#{name} = value.dup
             end
           end
+
+          def has_#{name}?; true; end
         EOF
       else
         klass.class_eval <<-EOF, __FILE__, __LINE__+1
@@ -120,6 +120,10 @@ module ProtocolBuffers
               @set_fields[#{tag}] = true
               @#{name} = value
             end
+          end
+
+          def has_#{name}?
+            value_for_tag?(#{tag})
           end
         EOF
       end
@@ -444,7 +448,7 @@ module ProtocolBuffers
 
       def decode(value)
         obj = @proxy_class.new
-        obj.parse_from_string(value)
+        obj.parse(value)
       end
     end
 

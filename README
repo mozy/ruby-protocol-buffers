@@ -26,6 +26,7 @@ native extension. TODO: anybody know if we can make this optional?
 
 === Unsupported Features
 
+ * required fields are not validated
  * groups (deprecated by Google)
  * extensions
  * options not relevant to Ruby (java_*, optimize_for, message_set_wire_format, deprecated)
@@ -36,6 +37,7 @@ native extension. TODO: anybody know if we can make this optional?
 === Known Issues
  * not tested on Windows
  * type-checking is skipped for repeated fields
+ * setting of sub-messages is handled a little oddly, could bite somebody
  * lots of polish still needed in APIs, docs, etc
 
 == Simple Usage Example
