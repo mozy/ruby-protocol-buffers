@@ -1,0 +1,10 @@
+message A {
+  message B {
+  };
+
+  optional B b = 1;
+};
+
+message C {
+  optional A.B b = 1;
+};

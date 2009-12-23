@@ -29,7 +29,7 @@ HEADER
     @io.write("\n") unless descriptor.dependency.empty?
 
     # in_namespace correctly handles the case where @package.nil?
-    unless @package.nil?
+    unless @package.empty?
       @io.write("# Reload support\nObject.__send__(:remove_const, :#{@package}) if defined?(#{@package})\n\n")
     end
 
@@ -54,8 +54,7 @@ HEADER
 
     line %{# forward declarations}
     messages.each do |message|
-      # TODO: this is wrong
-      line %{class #{name([@package, message.name])} < ::ProtocolBuffers::Message; end}
+      line %{class #{name(message.name)} < ::ProtocolBuffers::Message; end}
     end
     enums.each do |enum|
       line %{module #{name([@package, enum.name])}; end}
