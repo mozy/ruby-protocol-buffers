@@ -10,7 +10,34 @@ defined by these modules. The compiler relies on Google's C++ based protoc
 compiler for much of the heavy lifting -- this has huge advantages in ensuring
 correctness.
 
-Simple usage example:
+This library is heavily optimized for encoding and decoding speed. There is a
+small C extension available in the ext/ dir that will improve performance even
+further, but it is currently disabled to avoid rubygems having to compile a
+native extension. TODO: anybody know if we can make this optional?
+
+== Features
+
+=== Supported Features
+
+ * messages, enums, field types, all basic protobuf features
+ * packages
+ * imports
+ * nested types
+
+=== Unsupported Features
+
+ * groups (deprecated by Google)
+ * extensions
+ * options not relevant to Ruby (java_*, optimize_for, message_set_wire_format, deprecated)
+ * packed option (could be useful)
+ * accessing custom options
+ * RPC stubbing
+
+=== Known Issues
+ * not tested on Windows
+ * type-checking is skipped for repeated fields
+
+== Simple Usage Example
 
   $ echo "package Test; message MyMessage { optional string myField = 1; }" > test.proto
   $ ruby-protoc test.proto
