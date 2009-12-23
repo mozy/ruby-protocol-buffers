@@ -272,7 +272,11 @@ module ProtocolBuffers
       end
     end
 
-    class Sfixed32Field < Fixed32Field
+    class Sfixed32Field < NumericField
+      def self.wire_type
+        ProtocolBuffers::WireTypes::FIXED32
+      end
+
       def min
         -(1 << 31)
       end
@@ -300,6 +304,7 @@ module ProtocolBuffers
         (1 << 63) - 1
       end
     end
+
     class Sint64Field < Int64Field
       def serialize(io, value)
         super(io, Varint.encodeZigZag64(value))
@@ -310,7 +315,11 @@ module ProtocolBuffers
       end
     end
 
-    class Sfixed64Field < Fixed64Field
+    class Sfixed64Field < NumericField
+      def self.wire_type
+        ProtocolBuffers::WireTypes::FIXED64
+      end
+
       def min
         -(1 << 63)
       end
