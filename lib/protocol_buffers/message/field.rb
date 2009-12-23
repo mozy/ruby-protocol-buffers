@@ -167,7 +167,9 @@ module ProtocolBuffers
       end
     end
 
-    class StringField < BytesField; end
+    class StringField < BytesField
+      # TODO: UTF-8 validation
+    end
 
     class NumericField < Field
       def min
@@ -262,6 +264,7 @@ module ProtocolBuffers
         (1 << 31) - 1
       end
     end
+
     class Sint32Field < Int32Field
       def serialize(io, value)
         super(io, Varint.encodeZigZag32(value))
