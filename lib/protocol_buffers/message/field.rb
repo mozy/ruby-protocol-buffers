@@ -199,6 +199,10 @@ module ProtocolBuffers
         ProtocolBuffers::Varint.encode(io, value)
       end
 
+      def valid?(value)
+        super && value.is_a?(Integer)
+      end
+
       # this isn't very symmetrical...
       def decode(value)
         value
@@ -226,6 +230,10 @@ module ProtocolBuffers
         0xFFFFFFFF
       end
 
+      def valid?(value)
+        super && value.is_a?(Integer)
+      end
+
       def serialize(io, value)
         super
         io.write([value].pack('L'))
@@ -243,6 +251,10 @@ module ProtocolBuffers
 
       def max
         0xFFFFFFFF_FFFFFFFF
+      end
+
+      def valid?(value)
+        super && value.is_a?(Integer)
       end
 
       def serialize(io, value)
@@ -288,6 +300,10 @@ module ProtocolBuffers
         (1 << 31) - 1
       end
 
+      def valid?(value)
+        super && value.is_a?(Integer)
+      end
+
       def serialize(io, value)
         super
         io.write([value].pack('l'))
@@ -331,6 +347,10 @@ module ProtocolBuffers
         (1 << 63) - 1
       end
 
+      def valid?(value)
+        super && value.is_a?(Integer)
+      end
+
       def serialize(io, value)
         super
         io.write([value].pack('q'))
@@ -347,7 +367,7 @@ module ProtocolBuffers
       end
 
       def valid?(value)
-        value.is_a?(Float)
+        value.is_a?(Numeric)
       end
 
       def default_value
@@ -370,7 +390,7 @@ module ProtocolBuffers
       end
 
       def valid?(value)
-        value.is_a?(Float)
+        value.is_a?(Numeric)
       end
 
       def default_value

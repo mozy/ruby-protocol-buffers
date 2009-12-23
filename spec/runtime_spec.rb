@@ -46,6 +46,15 @@ describe ProtocolBuffers, "runtime" do
     a1.has_sub2?.should == true
   end
 
+  it "does type checking of repeated fields" do
+    pending("do type checking of repeated fields") do
+      a1 = Featureful::A.new
+      proc do
+        a1.sub1 << "dummy string"
+      end.should raise_error(ProtocolBuffers::InvalidFieldValue)
+    end
+  end
+
   it "detects changes to a sub-message and flags it as set if it wasn't" do
     pending("figure out what to do about sub-message init") do
       # the other option is to start sub-messages as nil, and require explicit
@@ -72,7 +81,7 @@ describe ProtocolBuffers, "runtime" do
     end.should raise_error()
   end
 
-  it "can serialize and de-serialize all basic field types" do
+  def filled_in_bit
     bit = Featureful::ABitOfEverything.new
     bit.double_field = 1.0
     bit.float_field = 2.0
@@ -89,12 +98,46 @@ describe ProtocolBuffers, "runtime" do
     bit.bool_field = true
     bit.string_field = "14"
     bit.bytes_field = "15"
+    bit
+  end
+
+  it "can serialize and de-serialize all basic field types" do
+    bit = filled_in_bit
 
     bit2 = Featureful::ABitOfEverything.parse(bit.to_s)
     bit.should == bit2
     bit.fields.each do |tag, field|
       bit.value_for_tag(tag).should == bit2.value_for_tag(tag)
     end
+  end
+
+  it "does type checking" do
+    bit = filled_in_bit
+
+    proc do
+      bit.fixed32_field = 1.0
+    end.should raise_error(ProtocolBuffers::InvalidFieldValue)
+
+    proc do
+      bit.double_field = 15
+    end.should_not raise_error()
+    bit2 = Featureful::ABitOfEverything.parse(bit.to_s)
+    bit2.double_field.should == 15
+    bit2.double_field.should == 15.0
+    bit2.double_field.is_a?(Float).should == true
+
+    proc do
+      bit.bool_field = 1.0
+    end.should raise_error(ProtocolBuffers::InvalidFieldValue)
+
+    proc do
+      bit.string_field = 1.0
+    end.should raise_error(ProtocolBuffers::InvalidFieldValue)
+
+    a1 = Featureful::A.new
+    proc do
+      a1.sub2 = "zomgkittenz"
+    end.should raise_error(ProtocolBuffers::InvalidFieldValue)
   end
 
 end
