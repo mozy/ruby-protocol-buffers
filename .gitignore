@@ -2,3 +2,6 @@
 /*.d
 /*.proto
 pkg/*
+prof/*
+tests/*
+d/*
