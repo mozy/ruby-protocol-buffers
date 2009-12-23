@@ -1,0 +1,21 @@
+package featureful;
+
+message A {
+  message Sub {
+    enum Payloads {
+      P1 = 0;
+      P2 = 1;
+    };
+
+    optional string payload = 1;
+    required Payloads payload_type = 2;
+  };
+
+  repeated Sub sub1 = 1;
+  optional Sub sub2 = 2;
+  required Sub sub3 = 3;
+};
+
+message B {
+  repeated A a = 1;
+};

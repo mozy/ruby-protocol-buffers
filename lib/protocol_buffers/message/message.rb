@@ -116,7 +116,7 @@ module ProtocolBuffers
     end
 
     def value_for_tag?(tag)
-      @set_fields[tag]
+      @set_fields[tag] || false
     end
 
     def ==(obj)

@@ -36,6 +36,7 @@ native extension. TODO: anybody know if we can make this optional?
 === Known Issues
  * not tested on Windows
  * type-checking is skipped for repeated fields
+ * lots of polish still needed in APIs, docs, etc
 
 == Simple Usage Example
 

@@ -31,12 +31,10 @@ filenames = rest
 
 (puts "Missing input file.\n\n"; puts opts; exit) if filenames.empty?
 
-require 'protocol_buffers/compiler/descriptor.pb'
+require 'protocol_buffers/compiler'
 
 protocfile = Tempfile.new("ruby-protoc")
-other_opts = ""
-include_dirs.each { |d| other_opts += " -I#{d}" }
-`protoc #{other_opts} -o#{protocfile.path} #{filenames.join(" ")}`
+ProtocolBuffers::Compiler.compile(protocfile.path, filenames, :include_dirs => include_dirs)
 descriptor_set = FileDescriptorSet.parse(protocfile)
 protocfile.close(true)
 

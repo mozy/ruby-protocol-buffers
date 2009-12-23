@@ -1,0 +1,5 @@
+package simple;
+
+message Test1 {
+  optional string test_field = 1;
+};
