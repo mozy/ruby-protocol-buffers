@@ -15,30 +15,35 @@ small C extension available in the ext/ dir that will improve performance even
 further, but it is currently disabled to avoid rubygems having to compile a
 native extension. TODO: anybody know if we can make this optional?
 
+Because this is a tool for generating code, the RDoc documentation is a bit
+unusual. See the text in the ProtocolBuffers::Message class for details on what
+code is generated.
+
 == Features
 
 === Supported Features
 
- * messages, enums, field types, all basic protobuf features
- * packages
- * imports
- * nested types
+* messages, enums, field types, all basic protobuf features
+* packages
+* imports
+* nested types
 
 === Unsupported Features
 
- * required fields are not validated
- * groups (deprecated by Google)
- * extensions
- * options not relevant to Ruby (java_*, optimize_for, message_set_wire_format, deprecated)
- * packed option (could be useful)
- * accessing custom options
- * RPC stubbing
+* required fields are not validated
+* groups (deprecated by Google)
+* extensions
+* options not relevant to Ruby (java_*, optimize_for, message_set_wire_format, deprecated)
+* packed option (could be useful)
+* accessing custom options
+* RPC stubbing
 
 === Known Issues
- * not tested on Windows
- * type-checking is skipped for repeated fields
- * setting of sub-messages is handled a little oddly, could bite somebody
- * lots of polish still needed in APIs, docs, etc
+
+* not tested on Windows
+* type-checking is skipped for repeated fields
+* setting of sub-messages is handled a little oddly, could bite somebody
+* lots of polish still needed in APIs, docs, etc
 
 == Simple Usage Example
 

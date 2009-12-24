@@ -140,4 +140,18 @@ describe ProtocolBuffers, "runtime" do
     end.should raise_error(ProtocolBuffers::InvalidFieldValue)
   end
 
+  it "doesn't allow invalid enum values" do
+    sub = Featureful::A::Sub.new
+
+    proc do
+      sub.payload_type.should == 0
+      sub.payload_type = Featureful::A::Sub::Payloads::P2
+      sub.payload_type.should == 1
+    end.should_not raise_error()
+
+    proc do
+      sub.payload_type = 2
+    end.should raise_error(ProtocolBuffers::InvalidFieldValue)
+  end
+
 end

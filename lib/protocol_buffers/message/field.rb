@@ -1,8 +1,8 @@
 require 'protocol_buffers'
+require 'protocol_buffers/message/enum'
 
 module ProtocolBuffers
   class InvalidFieldValue < StandardError; end
-  module Enum; end
 
   module WireTypes # :nodoc:
     VARINT = 0

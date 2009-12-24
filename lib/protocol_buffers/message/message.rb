@@ -3,10 +3,170 @@ require 'protocol_buffers/message/field'
 require 'protocol_buffers/message/decoder'
 
 module ProtocolBuffers
+
+  # = Generated Code
+  #
+  # This text describes exactly what Ruby code the protocol buffer compiler
+  # generates for any given protocol definition. You should read the language
+  # guide before reading this document:
+  #
+  # http://code.google.com/apis/protocolbuffers/docs/proto.html
+  #
+  # == Packages
+  #
+  # If a package name is given in the <tt>.proto</tt> file, all top-level
+  # messages and enums in the file will be defined underneath a module with the
+  # same name as the package. The first letter of the package is capitalized if
+  # necessary.  This applies to message and enum names as well, since Ruby
+  # classes and modules must be capitalized.
+  #
+  # For example, the following <tt>.proto</tt> file:
+  #
+  #   package wootcakes;
+  #   message uberWoot { }
+  #
+  # Will define a module +Wootcakes+ and a class <tt>Wootcakes::UberWoot</tt>
+  #
+  # == Messages
+  #
+  # Given a simple message definition:
+  #
+  #   message Foo {}
+  #
+  # The compiler will generate a class called +Foo+, which subclasses
+  # ProtocolBuffers::Message.
+  #
+  # These generated classes are not designed for subclassing.
+  #
+  # Ruby message classes have no particular public methods or accessors other
+  # than those defined by ProtocolBuffers::Message and those generated for
+  # nested fields, messages, and enum types (see below).
+  #
+  # A message can be declared inside another message. For example:
+  # <tt>message Foo { message Bar { } }</tt>
+  #
+  # In this case, the +Bar+ class is declared inside the +Foo+ class, so you can
+  # access it as <tt>Foo::Bar</tt> (or if in package +Baz+,
+  # <tt>Baz::Foo::Bar</tt>)
+  #
+  # == Fields
+  #
+  # For each field in the message type, the corresponding class has a member
+  # with the same name as the field. How you can manipulate the member depends
+  # on its type.
+  #
+  # === Singular Fields
+  #
+  # If you have a singular (optional or repeated) field +foo+ of any non-message
+  # type, you can manipulate the field +foo+ as if it were a regular field. For
+  # example, if +foo+'s type is <tt>int32</tt>, you can say:
+  #
+  #   message.foo = 123
+  #   puts message.foo
+  #
+  # Note that setting foo to a value of the wrong type will raise a
+  # ProtocolBuffers::InvalidFieldValue.
+  #
+  # If +foo+ is read when it is not set, its value is the default value for that
+  # field. To check if +foo+ is set, call <tt>has_foo?</tt> To clear +foo+, call
+  # <tt>message.foo = nil</tt>. For example:
+  #
+  #   assert(!message.has_foo?)
+  #   message.foo = 123
+  #   assert(message.has_foo?)
+  #   message.foo = nil
+  #   assert(!message.has_foo?)
+  #
+  # === Singular Message Fields
+  #
+  # TODO: the current implementation is pretty broken here. Make it like the
+  # python lib, setting a field on the sub-message sets has_foo?. Hmm, so you
+  # can't assign any value to the field but nil? That's kind of wack.
+  #
+  # === Repeated Fields
+  #
+  # Repeated fields are represented as an object that acts like an Array.
+  # As with embedded messages, you cannot assign the field directly, but you can
+  # manipulate it. For example, given this message definition:
+  #
+  #   message Foo {
+  #     repeated int32 nums = 1;
+  #   }
+  #
+  # You can do the following:
+  #
+  #   foo = Foo.new
+  #   foo.nums << 15
+  #   foo.nums.push(32)
+  #   assert foo.nums.length == 2
+  #   assert foo.nums[0] == 15
+  #   assert foo.nums[1] == 32
+  #   foo.nums.each { |i| puts i }
+  #   foo.nums[1] = 56
+  #   assert foo.nums[1] == 56
+  #
+  # As with singular fields, to clear the field you must set
+  # <tt>foo.nums = nil</tt>.
+  #
+  # === Repeated Message Fields
+  #
+  # Repeated message fields work like other repeated fields. For example, given
+  # this message definition:
+  #
+  #   message Foo {
+  #     repeated Bar bars = 1;
+  #   }
+  #   message Bar {
+  #     optional int32 i = 1;
+  #   }
+  #
+  # You can do the following:
+  #
+  #   foo = Foo.new
+  #   foo.bars << Bar.new(:i => 15)
+  #   foo.bars << Bar.new(:i => 32)
+  #   assert foo.bars.length == 2
+  #   assert foo.bars[0].i == 15
+  #   assert foo.bars[1].i == 32
+  #   foo.bars.each { |bar| puts bar.i }
+  #   foo.bars[1].i = 56
+  #   assert foo.bars[1].i == 56
+  #
+  # == Enumerations
+  #
+  # Enumerations are defined as a module with an integer constant for each
+  # valid value. For example, given:
+  #
+  #   enum Foo {
+  #     VALUE_A = 1;
+  #     VALUE_B = 5;
+  #     VALUE_C = 1234;
+  #   }
+  #
+  # The following Ruby code will be generated:
+  #
+  #   module Foo
+  #     VALUE_A = 1
+  #     VALUE_B = 5
+  #     VALUE_C 1234
+  #   end
+  #
+  # An exception will be thrown if an enum field is assigned a value not in the
+  # enum. Right now, this includes throwing an exception while parsing. This may
+  # change in the future to match the C++ behavior of treating it as an unknown
+  # tag number.
+  #
+  # == Extensions
+  #
+  # Protocol Buffer extensions are not currently supported in this library.
+  #
+  # == Services
+  #
+  # Protocol Buffer service (RPC) definitions are ignored.
+
   class Message
     # Create a new Message of this class.
     #
-    # :call-seq:
     #   message = MyMessageClass.new(attributes)
     #   # is equivalent to
     #   message = MyMessageClass.new
@@ -29,6 +189,10 @@ module ProtocolBuffers
 
     # Serialize this Message to the given IO stream using the Protocol Buffer
     # wire format.
+    #
+    # Equivalent to, but more efficient than
+    #
+    #   io << message
     #
     # Returns +io+
     def serialize(io)
@@ -57,7 +221,7 @@ module ProtocolBuffers
     # stream.
     #
     # This does not call clear! beforehand, so this is logically equivalent to
-    # :call-seq:
+    #
     #   new_message = self.class.new
     #   new_message.parse(io)
     #   merge_from(new_message)
@@ -97,7 +261,6 @@ module ProtocolBuffers
 
     # Assign values to attributes in bulk.
     #
-    # :call-seq:
     #   message.attributes = { :field1 => value1, :field2 => value2 } -> message
     def attributes=(hash = {})
       hash.each do |name, value|
@@ -154,7 +317,7 @@ module ProtocolBuffers
     end
 
     # Reflection: get the attribute value for the given tag id.
-    # :call-seq:
+    #
     #   message.value_for_tag(message.class.field_for_name(:f1).tag)
     #   # is equivalent to
     #   message.f1
@@ -162,7 +325,8 @@ module ProtocolBuffers
       self.__send__(fields[tag].name)
     end
 
-    # :call-seq:
+    # Reflection: does this Message have the field set?
+    #
     #   message.value_for_tag?(message.class.field_for_name(:f1).tag)
     #   # is equivalent to
     #   message.has_f1?

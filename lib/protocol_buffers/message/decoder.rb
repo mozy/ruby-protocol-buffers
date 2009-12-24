@@ -1,6 +1,6 @@
 module ProtocolBuffers
 
-  class Decoder
+  class Decoder # :nodoc: all
     def initialize(io, message)
       @io = io
       @message = message

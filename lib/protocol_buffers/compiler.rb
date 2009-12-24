@@ -1,7 +1,7 @@
 require 'protocol_buffers/compiler/descriptor.pb'
 
 module ProtocolBuffers
-  class CompileError < Exception; end
+  class CompileError < StandardError; end
 
   module Compiler
     def self.compile(output_filename, input_files, opts = {})
