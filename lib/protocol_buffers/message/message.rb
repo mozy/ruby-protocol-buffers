@@ -325,6 +325,10 @@ module ProtocolBuffers
       self.__send__(fields[tag].name)
     end
 
+    def set_value_for_tag(tag, value)
+      self.__send__("#{fields[tag].name}=", value)
+    end
+
     # Reflection: does this Message have the field set?
     #
     #   message.value_for_tag?(message.class.field_for_name(:f1).tag)

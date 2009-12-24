@@ -34,5 +34,14 @@ module ProtocolBuffers
       end
       true
     end
+
+    def self.compile_and_load_string(input, opts = {})
+      require 'tempfile'
+      tempfile = Tempfile.new("protocol_buffers_load_string")
+      tempfile.write(input)
+      tempfile.flush
+      (opts[:include_dirs] ||= []) << File.dirname(tempfile.path)
+      compile_and_load(tempfile.path, opts)
+    end
   end
 end
