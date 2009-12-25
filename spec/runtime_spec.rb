@@ -154,4 +154,53 @@ describe ProtocolBuffers, "runtime" do
     end.should raise_error(ProtocolBuffers::InvalidFieldValue)
   end
 
+  it "ignores and passes on unknown fields" do
+    ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
+      package tehUnknown;
+      message MyResult {
+        optional string field_1 = 1;
+        optional string field_2 = 2;
+      }
+    EOS
+
+    res1 = TehUnknown::MyResult.new(:field_1 => 'a', :field_2 => 'b')
+    serialized = res1.to_s
+
+    # remove field_2 to pretend we never knew about it
+    ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
+      package tehUnknown;
+      message MyResult {
+        optional string field_1 = 1;
+      }
+    EOS
+
+    res2 = nil
+    proc do
+      res2 = TehUnknown::MyResult.parse(serialized)
+    end.should_not raise_error()
+
+    res2.field_1.should == 'a'
+
+    proc do
+      res2.field_2.should == 'b'
+    end.should raise_error(NoMethodError)
+
+    serialized2 = res2.to_s
+
+    # now we know about field_2 again
+    ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
+      package tehUnknown;
+      message MyResult {
+        optional string field_1 = 1;
+        optional string field_2 = 2;
+      }
+    EOS
+
+    res3 = TehUnknown::MyResult.parse(serialized2)
+    res3.field_1.should == 'a'
+    pending("pass on unknown fields") do
+      res3.field_2.should == 'b'
+    end
+  end
+
 end

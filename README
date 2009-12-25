@@ -4,11 +4,11 @@ Protocol Buffers are a way of encoding structured data in an efficient yet
 extensible format. Google uses Protocol Buffers for almost all of its internal
 RPC protocols and file formats.
 
-Ruby Protocol Buffers has two components: a compiler to turn .proto definitions
-into Ruby modules (extension .pb.rb), and a runtime to use protocol buffers
-defined by these modules. The compiler relies on Google's C++ based protoc
-compiler for much of the heavy lifting -- this has huge advantages in ensuring
-correctness.
+This library has two components: a compiler to turn <tt>.proto</tt> definitions
+into Ruby modules (extension <tt>.pb.rb</tt>), and a runtime to use protocol
+buffers defined by these modules. The compiler relies on Google's C++ based
+compiler (+protoc+) for much of the heavy lifting -- this has huge advantages in
+ensuring compatibility and correctness.
 
 This library is heavily optimized for encoding and decoding speed. There is a
 small C extension available in the ext/ dir that will improve performance even
@@ -31,19 +31,23 @@ code is generated.
 === Unsupported Features
 
 * required fields are not validated
-* groups (deprecated by Google)
+* unknown tags are properly ignored, but not passed on when re-serialized (similar to the Python lib)
 * extensions
-* options not relevant to Ruby (java_*, optimize_for, message_set_wire_format, deprecated)
 * packed option (could be useful)
 * accessing custom options
+
+=== Probably Never to be Supported
+
 * RPC stubbing
+* groups (deprecated by Google)
+* the unsupported options (java_*, optimize_for, message_set_wire_format, deprecated)
 
 === Known Issues
 
 * not tested on Windows
 * type-checking is skipped for repeated fields
 * setting of sub-messages is handled a little oddly, could bite somebody
-* lots of polish still needed in APIs, docs, etc
+* lots of polish still needed in APIs, docs, calling out to +protoc+, etc
 
 == Simple Usage Example
 
@@ -64,7 +68,8 @@ Brian Palmer (brian@mozy.com)
 You'll need protoc version >= 2.2 (the Google Protocol Buffer compiler)
 installed in the environment where you will be compiling protocol buffers. This
 is only needed for compiling, you don't need it installed to use the generated
-.pb.rb files.
+<tt>.pb.rb</tt> files. You do need this Ruby library installed to use the
+<tt>.pb.rb</tt> files, for the runtime support.
 
 If you use RubyGems, you can install via:
 

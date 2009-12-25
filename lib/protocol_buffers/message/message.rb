@@ -350,6 +350,7 @@ module ProtocolBuffers
 
     def set_field_from_wire(tag, bytes) # :nodoc:
       field = fields[tag]
+      return unless field # TODO: handle unknown fields and pass them on
       value = field.decode(bytes)
       merge_field(tag, value, field)
     end

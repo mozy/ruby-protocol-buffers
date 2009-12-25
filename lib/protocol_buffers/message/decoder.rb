@@ -9,22 +9,24 @@ module ProtocolBuffers
     def decode(io = @io, message = @message)
       until io.eof?
 
-        tag_int = ::ProtocolBuffers::Varint.decode(io)
+        tag_int = Varint.decode(io)
         tag = tag_int >> 3
         wire_type = tag_int & 0b111
 
-        # BE WARNED
         # This is ugly magic-number code. These values are defined in
         # field.rb, but believe it or not this loop is so performance critical
         # that just removing the stupid const lookups on each interation shaved
         # 10% off of our decoding benchmark.
+        #
+        # Besides, these constants can't change without breaking wire protcol
+        # compatibility.
         bytes = case wire_type
                 when 0 # ProtocolBuffers::WireTypes::VARINT
-                  ::ProtocolBuffers::Varint.decode(io)
+                  Varint.decode(io)
                 when 1 # ProtocolBuffers::WireTypes::FIXED64
                   io.read(8)
                 when 2 # ProtocolBuffers::WireTypes::LENGTH_DELIMITED
-                  len = ::ProtocolBuffers::Varint.decode(io)
+                  len = Varint.decode(io)
                   io.read(len)
                 when 5 # ProtocolBuffers::WireTypes::FIXED32
                   io.read(4)
