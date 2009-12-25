@@ -116,7 +116,7 @@ describe ProtocolBuffers, "runtime" do
 
     proc do
       bit.fixed32_field = 1.0
-    end.should raise_error(ProtocolBuffers::InvalidFieldValue)
+    end.should raise_error(TypeError)
 
     proc do
       bit.double_field = 15
@@ -128,16 +128,16 @@ describe ProtocolBuffers, "runtime" do
 
     proc do
       bit.bool_field = 1.0
-    end.should raise_error(ProtocolBuffers::InvalidFieldValue)
+    end.should raise_error(TypeError)
 
     proc do
       bit.string_field = 1.0
-    end.should raise_error(ProtocolBuffers::InvalidFieldValue)
+    end.should raise_error(TypeError)
 
     a1 = Featureful::A.new
     proc do
       a1.sub2 = "zomgkittenz"
-    end.should raise_error(ProtocolBuffers::InvalidFieldValue)
+    end.should raise_error(TypeError)
   end
 
   it "doesn't allow invalid enum values" do
@@ -151,7 +151,7 @@ describe ProtocolBuffers, "runtime" do
 
     proc do
       sub.payload_type = 2
-    end.should raise_error(ProtocolBuffers::InvalidFieldValue)
+    end.should raise_error(ArgumentError)
   end
 
   it "ignores and passes on unknown fields" do

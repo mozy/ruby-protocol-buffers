@@ -13,23 +13,23 @@ describe ProtocolBuffers, "fields" do
 
   it "checks bounds on varint field types" do
     u32 = mkfield(:Uint32Field)
-    u32.valid?(0xFFFFFFFF).should == true
-    u32.valid?(0x100000000).should == false
-    u32.valid?(-1).should == false
+    proc { u32.check_valid(0xFFFFFFFF) }.should_not raise_error()
+    proc { u32.check_valid(0x100000000) }.should raise_error(ArgumentError)
+    proc { u32.check_valid(-1) }.should raise_error(ArgumentError)
 
     u64 = mkfield(:Uint64Field)
-    u64.valid?(0xFFFFFFFF_FFFFFFFF).should == true
-    u64.valid?(0x100000000_00000000).should == false
-    u64.valid?(-1).should == false
+    proc { u64.check_valid(0xFFFFFFFF_FFFFFFFF) }.should_not raise_error()
+    proc { u64.check_valid(0x100000000_00000000) }.should raise_error(ArgumentError)
+    proc { u64.check_valid(-1) }.should raise_error(ArgumentError)
   end
 
   it "verifies UTF-8 for string fields" do
     pending("do UTF-8 validation") do
       s1 = mkfield(:StringField)
-      s1.valid?("hello").should == true
+      proc { s1.check_valid("hello") }.should_not raise_error()
       b1 = mkfield(:BytesField)
-      b1.valid?("\xff\xff").should == true
-      s1.valid?("\xff\xff").should == false
+      proc { b1.valid?("\xff\xff") }.should_not raise_error()
+      proc { s1.valid?("\xff\xff") }.should raise_error(ArgumentError)
     end
   end
 

@@ -2,7 +2,6 @@ require 'protocol_buffers'
 require 'protocol_buffers/message/enum'
 
 module ProtocolBuffers
-  class InvalidFieldValue < StandardError; end
 
   module WireTypes # :nodoc:
     VARINT = 0
@@ -116,7 +115,7 @@ module ProtocolBuffers
               @#{name} = fields[#{tag}].default_value
             else
               field = fields[#{tag}]
-              raise ::ProtocolBuffers::InvalidFieldValue unless field.valid?(value)
+              field.check_valid(value)
               @set_fields[#{tag}] = true
               @#{name} = value
             end
@@ -134,7 +133,11 @@ module ProtocolBuffers
       ProtocolBuffers::Varint.encode(io, (self.tag << 3) | self.class.wire_type)
     end
 
-    def valid?(value)
+    def check_value(value)
+      # pass
+    end
+
+    def valid_type?(value)
       true
     end
 
@@ -142,12 +145,17 @@ module ProtocolBuffers
       value.inspect
     end
 
+    def check_valid(value)
+      raise(TypeError, "can't assign #{value.class.name} to #{self.class.name}") unless valid_type?(value)
+      check_value(value)
+    end
+
     class BytesField < Field
       def self.wire_type
         ProtocolBuffers::WireTypes::LENGTH_DELIMITED
       end
 
-      def valid?(value)
+      def valid_type?(value)
         value.is_a?(String)
       end
 
@@ -180,13 +188,17 @@ module ProtocolBuffers
         1.0 / 0.0
       end
 
-      def valid?(value)
-        value >= min && value <= max
+      def check_value(value)
+        raise(ArgumentError, "value is out of range for type #{self.class.name}: #{value}") unless value >= min && value <= max
       end
 
       def default_value
         @opts[:default] || 0
       end
+
+      private
+      # base class, not used directly
+      def initialize(*a); super; end
     end
 
     class VarintField < NumericField
@@ -199,14 +211,18 @@ module ProtocolBuffers
         ProtocolBuffers::Varint.encode(io, value)
       end
 
-      def valid?(value)
-        super && value.is_a?(Integer)
+      def valid_type?(value)
+        value.is_a?(Integer)
       end
 
       # this isn't very symmetrical...
       def decode(value)
         value
       end
+
+      private
+      # base class, not used directly
+      def initialize(*a); super; end
     end
 
     class Uint32Field < VarintField
@@ -230,8 +246,8 @@ module ProtocolBuffers
         0xFFFFFFFF
       end
 
-      def valid?(value)
-        super && value.is_a?(Integer)
+      def valid_type?(value)
+        value.is_a?(Integer)
       end
 
       def serialize(io, value)
@@ -253,8 +269,8 @@ module ProtocolBuffers
         0xFFFFFFFF_FFFFFFFF
       end
 
-      def valid?(value)
-        super && value.is_a?(Integer)
+      def valid_type?(value)
+        value.is_a?(Integer)
       end
 
       def serialize(io, value)
@@ -300,8 +316,8 @@ module ProtocolBuffers
         (1 << 31) - 1
       end
 
-      def valid?(value)
-        super && value.is_a?(Integer)
+      def valid_type?(value)
+        value.is_a?(Integer)
       end
 
       def serialize(io, value)
@@ -347,8 +363,8 @@ module ProtocolBuffers
         (1 << 63) - 1
       end
 
-      def valid?(value)
-        super && value.is_a?(Integer)
+      def valid_type?(value)
+        value.is_a?(Integer)
       end
 
       def serialize(io, value)
@@ -366,7 +382,7 @@ module ProtocolBuffers
         ProtocolBuffers::WireTypes::FIXED32
       end
 
-      def valid?(value)
+      def valid_type?(value)
         value.is_a?(Numeric)
       end
 
@@ -389,7 +405,7 @@ module ProtocolBuffers
         ProtocolBuffers::WireTypes::FIXED64
       end
 
-      def valid?(value)
+      def valid_type?(value)
         value.is_a?(Numeric)
       end
 
@@ -412,9 +428,11 @@ module ProtocolBuffers
         super(io, value ? 1 : 0)
       end
 
-      def valid?(value)
+      def valid_type?(value)
         value == true || value == false
       end
+
+      def check_value(value); end
 
       def decode(value)
         value != 0
@@ -437,8 +455,8 @@ module ProtocolBuffers
         }
       end
 
-      def valid?(value)
-        @valid_values.include?(value)
+      def check_value(value)
+        raise(ArgumentError, "value is out of range for #{self.class.name}: #{value}") unless @valid_values.include?(value)
       end
 
       def default_value
@@ -464,7 +482,7 @@ module ProtocolBuffers
         @proxy_class.new
       end
 
-      def valid?(value)
+      def valid_type?(value)
         value.is_a?(@proxy_class)
       end
 

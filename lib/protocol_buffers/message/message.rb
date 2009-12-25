@@ -64,8 +64,10 @@ module ProtocolBuffers
   #   message.foo = 123
   #   puts message.foo
   #
-  # Note that setting foo to a value of the wrong type will raise a
-  # ProtocolBuffers::InvalidFieldValue.
+  # Note that setting +foo+ to a value of the wrong type will raise a
+  # TypeError. Setting +foo+ to a value of the right type, but one that doesn't
+  # fit (such as assigning an out-of-bounds enum value) will raise an
+  # ArgumentError.
   #
   # If +foo+ is read when it is not set, its value is the default value for that
   # field. To check if +foo+ is set, call <tt>has_foo?</tt> To clear +foo+, call
