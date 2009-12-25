@@ -39,7 +39,7 @@ module ProtocolBuffers
         int_val = 0
         shift = 0
         loop do
-          raise("Too many bytes when decoding varint") if shift >= 64
+          raise(DecodeError, "too many bytes when decoding varint") if shift >= 64
           byte = io.getbyte
           int_val |= (byte & 0b0111_1111) << shift
           shift += 7

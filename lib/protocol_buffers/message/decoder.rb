@@ -31,11 +31,18 @@ module ProtocolBuffers
                 when 5 # ProtocolBuffers::WireTypes::FIXED32
                   io.read(4)
                 else
-                  raise "Wire type unknown: #{wire_type}"
+                  raise(DecodeError, "wire type unknown: #{wire_type}")
                 end
         message.set_field_from_wire(tag, bytes)
       end
+
+      unless message.valid?
+        raise(DecodeError, "invalid message")
+      end
+
       return message
+    rescue TypeError, ArgumentError
+      raise(DecodeError, "error parsing message")
     end
   end
 

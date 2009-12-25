@@ -30,7 +30,6 @@ code is generated.
 
 === Unsupported Features
 
-* required fields are not validated
 * unknown tags are properly ignored, but not passed on when re-serialized (similar to the Python lib)
 * extensions
 * packed option (could be useful)

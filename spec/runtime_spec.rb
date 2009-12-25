@@ -154,6 +154,66 @@ describe ProtocolBuffers, "runtime" do
     end.should raise_error(ArgumentError)
   end
 
+  it "enforces required fields on serialization" do
+    ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
+      package tehUnknown;
+      message MyResult {
+        required string field_1 = 1;
+        optional string field_2 = 2;
+      }
+    EOS
+
+    res1 = TehUnknown::MyResult.new(:field_2 => 'b')
+
+    proc { res1.to_s }.should raise_error(ProtocolBuffers::EncodeError)
+  end
+
+  it "enforces required fields on deserialization" do
+    ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
+      package tehUnknown;
+      message MyResult {
+        optional string field_1 = 1;
+        optional string field_2 = 2;
+      }
+    EOS
+
+    res1 = TehUnknown::MyResult.new(:field_2 => 'b')
+    buf = res1.to_s
+
+    # now make field_1 required
+    ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
+      package tehUnknown;
+      message MyResult {
+        required string field_1 = 1;
+        optional string field_2 = 2;
+      }
+    EOS
+
+    proc { TehUnknown::MyResult.parse(buf) }.should raise_error(ProtocolBuffers::DecodeError)
+  end
+
+  it "enforces valid values on deserialization" do
+    ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
+      package tehUnknown;
+      message MyResult {
+        optional int32 field_1 = 1;
+      }
+    EOS
+
+    res1 = TehUnknown::MyResult.new(:field_1 => 5)
+    buf = res1.to_s
+
+    ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
+      package tehUnknown;
+      message MyResult {
+        enum E { A = 1; }
+        optional E field_1 = 1;
+      }
+    EOS
+
+    proc { puts TehUnknown::MyResult.parse(buf) }.should raise_error(ProtocolBuffers::DecodeError)
+  end
+
   it "ignores and passes on unknown fields" do
     ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
       package tehUnknown;

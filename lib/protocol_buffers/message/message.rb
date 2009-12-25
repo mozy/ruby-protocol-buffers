@@ -4,6 +4,9 @@ require 'protocol_buffers/message/decoder'
 
 module ProtocolBuffers
 
+  class EncodeError < StandardError; end
+  class DecodeError < StandardError; end
+
   # = Generated Code
   #
   # This text describes exactly what Ruby code the protocol buffer compiler
@@ -198,6 +201,10 @@ module ProtocolBuffers
     #
     # Returns +io+
     def serialize(io)
+      unless valid?
+        raise(EncodeError, "invalid message")
+      end
+
       fields.each do |tag, field|
         next unless @set_fields[tag]
         value = self.__send__(field.name)
@@ -383,6 +390,7 @@ module ProtocolBuffers
 
     def self.required(type, name, tag, opts = {}) # :NODOC:
       define_field(:required, type, name, tag, opts)
+      @has_required_field = true
     end
 
     def self.optional(type, name, tag, opts = {}) # :NODOC:
@@ -393,9 +401,23 @@ module ProtocolBuffers
       define_field(:repeated, type, name, tag, opts)
     end
 
-    # Generate the initialize and merge_field methods using reflection, to
-    # improve speed. This is called by the generated .pb.rb code, it's not
-    # necessary to call this method directly.
+    def valid?
+      self.class.valid?(self)
+    end
+
+    def self.valid?(message)
+      return true unless @has_required_field
+
+      fields.each do |tag, field|
+        if field.otype == :required
+          return false unless message.value_for_tag?(tag)
+        end
+      end
+    end
+
+    # Generate the initialize method using reflection, to improve speed. This is
+    # called by the generated .pb.rb code, it's not necessary to call this
+    # method directly.
     def self.gen_methods! # :NODOC:
       @methods_generated = true
 
@@ -413,28 +435,6 @@ module ProtocolBuffers
           end.join("\n")}
 
           self.attributes = attributes unless attributes.empty?
-        end
-      EOF
-
-      return if fields.empty?
-
-      self.class_eval <<-EOF, __FILE__, __LINE__+1
-        def merge_field(tag, value, field = nil)
-          case tag
-            #{fields.map do |tag, field|
-              %{when #{tag}\n} +
-              if field.repeated?
-                %{if value.is_a?(Array)
-                    @#{field.name} += value
-                  else
-                    @#{field.name} << value
-                  end}
-              else
-                %{@#{field.name} = value
-                  @set_fields[#{tag}] = true}
-              end
-            end.join("\n")}
-          end
         end
       EOF
     end
