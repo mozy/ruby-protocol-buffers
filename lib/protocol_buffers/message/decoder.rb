@@ -1,39 +1,54 @@
+require 'protocol_buffers/limited_io'
+
 module ProtocolBuffers
 
-  class Decoder # :nodoc: all
-    def initialize(io, message)
-      @io = io
-      @message = message
-    end
+  class DecodeError < StandardError; end
 
-    def decode(io = @io, message = @message)
+  module Decoder # :nodoc: all
+    def self.decode(io, message)
+      fields = message.fields
+
       until io.eof?
-
         tag_int = Varint.decode(io)
         tag = tag_int >> 3
         wire_type = tag_int & 0b111
+        field = fields[tag]
 
-        # This is ugly magic-number code. These values are defined in
-        # field.rb, but believe it or not this loop is so performance critical
-        # that just removing the stupid const lookups on each interation shaved
-        # 10% off of our decoding benchmark.
-        #
-        # Besides, these constants can't change without breaking wire protcol
-        # compatibility.
-        bytes = case wire_type
-                when 0 # ProtocolBuffers::WireTypes::VARINT
-                  Varint.decode(io)
-                when 1 # ProtocolBuffers::WireTypes::FIXED64
-                  io.read(8)
-                when 2 # ProtocolBuffers::WireTypes::LENGTH_DELIMITED
-                  len = Varint.decode(io)
-                  io.read(len)
-                when 5 # ProtocolBuffers::WireTypes::FIXED32
-                  io.read(4)
-                else
-                  raise(DecodeError, "wire type unknown: #{wire_type}")
-                end
-        message.set_field_from_wire(tag, bytes)
+        if field && wire_type != field.wire_type
+          raise(DecodeError, "incorrect wire type for tag: #{field.tag}")
+        end
+
+        # replacing const lookups with hard-coded ints removed an entire 10%
+        # from an earlier decoding benchmark. these values can't change without
+        # breaking the protocol anyway, so we decided it was worth it.
+        case wire_type
+        when 0 # VARINT
+          value = Varint.decode(io)
+        when 1 # FIXED64
+          value = io.read(8)
+        when 2 # LENGTH_DELIMITED
+          length = Varint.decode(io)
+          value = LimitedIO.new(io, length)
+        when 5 # FIXED32
+          value = io.read(4)
+        when 3, 4 # deprecated START_GROUP/END_GROUP types
+          raise(DecodeError, "groups are deprecated and unsupported")
+        else
+          raise(DecodeError, "unknown wire type: #{wire_type}")
+        end
+
+        if field
+          deserialized = field.deserialize(value)
+          # merge_field handles repeated field logic
+          message.merge_field(tag, deserialized, field)
+        else
+          # ignore unknown fields
+          # TODO: save them, pass them on
+
+          # special handling -- if it's a LENGTH_DELIMITED field, we need to
+          # actually read the IO so that extra bytes aren't left on the wire
+          value.read if wire_type == 2 # LENGTH_DELIMITED
+        end
       end
 
       unless message.valid?

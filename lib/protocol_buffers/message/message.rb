@@ -1,11 +1,9 @@
 require 'stringio'
 require 'protocol_buffers/message/field'
+require 'protocol_buffers/message/encoder'
 require 'protocol_buffers/message/decoder'
 
 module ProtocolBuffers
-
-  class EncodeError < StandardError; end
-  class DecodeError < StandardError; end
 
   # = Generated Code
   #
@@ -185,7 +183,7 @@ module ProtocolBuffers
           @set_fields[tag] = true # repeated fields are always "set"
         else
           self.__send__("#{field.name}=", field.default_value)
-          @set_fields[tag] = false # hackish -- this is set by the writer
+          @set_fields[tag] = false
         end
       end
 
@@ -201,19 +199,7 @@ module ProtocolBuffers
     #
     # Returns +io+
     def serialize(io)
-      unless valid?
-        raise(EncodeError, "invalid message")
-      end
-
-      fields.each do |tag, field|
-        next unless @set_fields[tag]
-        value = self.__send__(field.name)
-        if field.repeated?
-          value.each { |v| field.serialize(io, v) }
-        else
-          field.serialize(io, value)
-        end
-      end
+      Encoder.encode(io, self)
       io
     end
 
@@ -239,7 +225,7 @@ module ProtocolBuffers
       if io.is_a?(String)
         io = StringIO.new(io)
       end
-      ProtocolBuffers::Decoder.new(io, self).decode
+      Decoder.decode(io, self)
       return self
     end
 
@@ -254,7 +240,7 @@ module ProtocolBuffers
     # Singular fields will be overwritten, except for embedded messages which
     # will be merged. Repeated fields will be concatenated.
     def merge_from(obj)
-      raise("Incompatible merge types: #{self.class} and #{obj.class}") unless obj.is_a?(self.class)
+      raise(ArgumentError, "Incompatible merge types: #{self.class} and #{obj.class}") unless obj.is_a?(self.class)
       for tag, field in self.class.fields
         next unless obj.value_for_tag?(tag)
         value = obj.value_for_tag(tag)
@@ -355,13 +341,6 @@ module ProtocolBuffers
       end
       ret << ">"
       return ret.string
-    end
-
-    def set_field_from_wire(tag, bytes) # :nodoc:
-      field = fields[tag]
-      return unless field # TODO: handle unknown fields and pass them on
-      value = field.decode(bytes)
-      merge_field(tag, value, field)
     end
 
     def merge_field(tag, value, field = fields[tag]) # :nodoc:

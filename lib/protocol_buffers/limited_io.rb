@@ -4,7 +4,14 @@ class LimitedIO < Struct.new(:parent, :limit)
     length = length || limit
     length = limit if length > limit
     self.limit -= length
-    parent.read(length, buffer)
+    # seems silly to check for buffer, but some IO#read methods implemented in C
+    # barf if you pass nil, rather than treat it as an argument that wasn't
+    # passed at all.
+    if buffer
+      parent.read(length, buffer)
+    else
+      parent.read(length)
+    end
   end
 
   def eof?

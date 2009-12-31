@@ -1,5 +1,7 @@
 require 'protocol_buffers'
 require 'protocol_buffers/message/enum'
+require 'protocol_buffers/message/varint'
+require 'protocol_buffers/limited_io'
 
 module ProtocolBuffers
 
@@ -10,58 +12,6 @@ module ProtocolBuffers
     START_GROUP = 3 # deprecated, not supported in ruby
     END_GROUP = 4   # ditto
     FIXED32 = 5
-  end
-
-  module Varint # :nodoc:
-    # encode/decode methods defined in ext/varint.c
-
-    unless self.respond_to?(:encode)
-      def self.encode(io, int_val)
-        if int_val < 0
-          # negative varints are always encoded with the full 10 bytes
-          int_val = int_val & 0xffffffff_ffffffff
-        end
-        loop do
-          byte = int_val & 0b0111_1111
-          int_val >>= 7
-          if int_val == 0
-            io << byte.chr
-            break
-          else
-            io << (byte | 0b1000_0000).chr
-          end
-        end
-      end
-    end
-
-    unless self.respond_to?(:decode)
-      def self.decode(io)
-        int_val = 0
-        shift = 0
-        loop do
-          raise(DecodeError, "too many bytes when decoding varint") if shift >= 64
-          byte = io.getbyte
-          int_val |= (byte & 0b0111_1111) << shift
-          shift += 7
-          # int_val -= (1 << 64) if int_val > UINT64_MAX
-          return int_val if (byte & 0b1000_0000) == 0
-        end
-      end
-    end
-
-    def self.encodeZigZag32(int_val)
-      (int_val << 1) ^ (int_val >> 31)
-    end
-
-    def self.encodeZigZag64(int_val)
-      (int_val << 1) ^ (int_val >> 63)
-    end
-
-    def self.decodeZigZag32(int_val)
-      (int_val >> 1) ^ -(int_val & 1)
-    end
-    class << self; alias_method :decodeZigZag64, :decodeZigZag32 end
-
   end
 
   class Field # :nodoc: all
@@ -128,11 +78,6 @@ module ProtocolBuffers
       end
     end
 
-    def serialize(io, value)
-      # write tag
-      ProtocolBuffers::Varint.encode(io, (self.tag << 3) | self.class.wire_type)
-    end
-
     def check_value(value)
       # pass
     end
@@ -150,10 +95,72 @@ module ProtocolBuffers
       check_value(value)
     end
 
-    class BytesField < Field
-      def self.wire_type
-        ProtocolBuffers::WireTypes::LENGTH_DELIMITED
+    # the type of value to return depends on the wire_type of the field:
+    # VARINT => Integer
+    # FIXED64 => 8-byte string
+    # LENGTH_DELIMITED => string
+    # FIXED32 => 4-byte string
+    def serialize(value)
+      value
+    end
+
+    # the type of value passed in depends on the wire_type of the field:
+    # VARINT => Integer (Fixnum or Bignum)
+    # FIXED64 => 8-byte string
+    # LENGTH_DELIMITED => IO class, make sure to consume all data available
+    # FIXED32 => 4-byte string
+    def deserialize(value)
+      value
+    end
+
+    module WireFormats
+      module LENGTH_DELIMITED
+        def wire_type
+          WireTypes::LENGTH_DELIMITED
+        end
+
+        def deserialize(value)
+          value.read
+        end
       end
+
+      module VARINT
+        def wire_type
+          WireTypes::VARINT
+        end
+      end
+
+      module FIXED32
+        def wire_type
+          WireTypes::FIXED32
+        end
+
+        def serialize(value)
+          [value].pack(pack_code)
+        end
+
+        def deserialize(value)
+          value.unpack(pack_code).first
+        end
+      end
+
+      module FIXED64
+        def wire_type
+          WireTypes::FIXED64
+        end
+
+        def serialize(value)
+          [value].pack(pack_code)
+        end
+
+        def deserialize(value)
+          value.unpack(pack_code).first
+        end
+      end
+    end
+
+    class BytesField < Field
+      include WireFormats::LENGTH_DELIMITED
 
       def valid_type?(value)
         value.is_a?(String)
@@ -161,17 +168,6 @@ module ProtocolBuffers
 
       def default_value
         @opts[:default] || ""
-      end
-
-      def serialize(io, value)
-        super
-        # encode length
-        ProtocolBuffers::Varint.encode(io, value.length)
-        io.write(value)
-      end
-
-      def decode(bytes)
-        bytes
       end
     end
 
@@ -202,22 +198,10 @@ module ProtocolBuffers
     end
 
     class VarintField < NumericField
-      def self.wire_type
-        ProtocolBuffers::WireTypes::VARINT
-      end
-
-      def serialize(io, value)
-        super
-        ProtocolBuffers::Varint.encode(io, value)
-      end
+      include WireFormats::VARINT
 
       def valid_type?(value)
         value.is_a?(Integer)
-      end
-
-      # this isn't very symmetrical...
-      def decode(value)
-        value
       end
 
       private
@@ -238,8 +222,10 @@ module ProtocolBuffers
     end
 
     class Fixed32Field < NumericField
-      def self.wire_type
-        ProtocolBuffers::WireTypes::FIXED32
+      include WireFormats::FIXED32
+
+      def pack_code
+        'L'
       end
 
       def max
@@ -249,20 +235,13 @@ module ProtocolBuffers
       def valid_type?(value)
         value.is_a?(Integer)
       end
-
-      def serialize(io, value)
-        super
-        io.write([value].pack('L'))
-      end
-
-      def decode(bytes)
-        bytes.unpack('L').first
-      end
     end
 
     class Fixed64Field < NumericField
-      def self.wire_type
-        ProtocolBuffers::WireTypes::FIXED64
+      include WireFormats::FIXED64
+
+      def pack_code
+        'Q'
       end
 
       def max
@@ -271,15 +250,6 @@ module ProtocolBuffers
 
       def valid_type?(value)
         value.is_a?(Integer)
-      end
-
-      def serialize(io, value)
-        super
-        io.write([value].pack('Q'))
-      end
-
-      def decode(bytes)
-        bytes.unpack('Q').first
       end
     end
 
@@ -294,18 +264,20 @@ module ProtocolBuffers
     end
 
     class Sint32Field < Int32Field
-      def serialize(io, value)
-        super(io, Varint.encodeZigZag32(value))
+      def serialize(value)
+        Varint.encodeZigZag32(value)
       end
 
-      def decode(value)
-        Varint.decodeZigZag32(super)
+      def deserialize(value)
+        Varint.decodeZigZag32(value)
       end
     end
 
     class Sfixed32Field < NumericField
-      def self.wire_type
-        ProtocolBuffers::WireTypes::FIXED32
+      include WireFormats::FIXED32
+
+      def pack_code
+        'l'
       end
 
       def min
@@ -318,15 +290,6 @@ module ProtocolBuffers
 
       def valid_type?(value)
         value.is_a?(Integer)
-      end
-
-      def serialize(io, value)
-        super
-        io.write([value].pack('l'))
-      end
-
-      def decode(bytes)
-        bytes.unpack('l').first
       end
     end
 
@@ -341,18 +304,20 @@ module ProtocolBuffers
     end
 
     class Sint64Field < Int64Field
-      def serialize(io, value)
-        super(io, Varint.encodeZigZag64(value))
+      def serialize(value)
+        Varint.encodeZigZag64(value)
       end
 
-      def decode(value)
-        Varint.decodeZigZag64(super)
+      def deserialize(value)
+        Varint.decodeZigZag64(value)
       end
     end
 
     class Sfixed64Field < NumericField
-      def self.wire_type
-        ProtocolBuffers::WireTypes::FIXED64
+      include WireFormats::FIXED64
+
+      def pack_code
+        'q'
       end
 
       def min
@@ -366,20 +331,13 @@ module ProtocolBuffers
       def valid_type?(value)
         value.is_a?(Integer)
       end
-
-      def serialize(io, value)
-        super
-        io.write([value].pack('q'))
-      end
-
-      def decode(bytes)
-        bytes.unpack('q').first
-      end
     end
 
     class FloatField < Field
-      def self.wire_type
-        ProtocolBuffers::WireTypes::FIXED32
+      include WireFormats::FIXED32
+
+      def pack_code
+        'e'
       end
 
       def valid_type?(value)
@@ -388,21 +346,14 @@ module ProtocolBuffers
 
       def default_value
         @opts[:default] || 0.0
-      end
-
-      def serialize(io, value)
-        super
-        io.write([value].pack('e'))
-      end
-
-      def decode(bytes)
-        bytes.unpack('e').first
       end
     end
 
     class DoubleField < Field
-      def self.wire_type
-        ProtocolBuffers::WireTypes::FIXED64
+      include WireFormats::FIXED64
+
+      def pack_code
+        'E'
       end
 
       def valid_type?(value)
@@ -412,20 +363,11 @@ module ProtocolBuffers
       def default_value
         @opts[:default] || 0.0
       end
-
-      def serialize(io, value)
-        super
-        io.write([value].pack('E'))
-      end
-
-      def decode(bytes)
-        bytes.unpack('E').first
-      end
     end
 
     class BoolField < VarintField
-      def serialize(io, value)
-        super(io, value ? 1 : 0)
+      def serialize(value)
+        value ? 1 : 0
       end
 
       def valid_type?(value)
@@ -434,7 +376,7 @@ module ProtocolBuffers
 
       def check_value(value); end
 
-      def decode(value)
+      def deserialize(value)
         value != 0
       end
 
@@ -469,9 +411,7 @@ module ProtocolBuffers
     end
 
     class MessageField < Field
-      def self.wire_type
-        ProtocolBuffers::WireTypes::LENGTH_DELIMITED
-      end
+      include WireFormats::LENGTH_DELIMITED
 
       def initialize(proxy_class, otype, name, tag, opts = {})
         super(otype, name, tag, opts)
@@ -486,19 +426,15 @@ module ProtocolBuffers
         value.is_a?(@proxy_class)
       end
 
-      # TODO: serialize and decode could be made faster if they used
-      #       the underlying stream directly rather than string copying
-      def serialize(io, value)
-        super
-        string = value.to_s
-        # encode length
-        ProtocolBuffers::Varint.encode(io, string.length)
-        io.write(string)
+      # TODO: serialize could be more efficient if it used the underlying stream
+      # directly rather than string copying, but that would require knowing the
+      # length beforehand.
+      def serialize(value)
+        value.to_s
       end
 
-      def decode(value)
-        obj = @proxy_class.new
-        obj.parse(value)
+      def deserialize(io)
+        @proxy_class.parse(io)
       end
     end
 

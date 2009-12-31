@@ -20,9 +20,19 @@ describe ProtocolBuffers, "runtime" do
 
     msg1.test_field = "zomgkittenz"
 
-    msg2 = Simple::Test1.parse(StringIO.new(msg1.to_s))
+    ser = StringIO.new(msg1.to_s)
+    msg2 = Simple::Test1.parse(ser)
     msg2.test_field.should == "zomgkittenz"
     msg2.should == msg1
+  end
+
+  it "doesn't serialize unset fields" do
+    msg1 = Simple::Test1.new
+    msg1.test_field.should == ""
+    msg1.to_s.should == ""
+
+    msg1.test_field = "zomgkittenz"
+    msg1.to_s.should_not == ""
   end
 
   it "flags values that have been set" do
@@ -211,26 +221,29 @@ describe ProtocolBuffers, "runtime" do
       }
     EOS
 
-    proc { puts TehUnknown::MyResult.parse(buf) }.should raise_error(ProtocolBuffers::DecodeError)
+    proc { TehUnknown::MyResult.parse(buf) }.should raise_error(ProtocolBuffers::DecodeError)
   end
 
   it "ignores and passes on unknown fields" do
     ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
       package tehUnknown;
       message MyResult {
-        optional string field_1 = 1;
-        optional string field_2 = 2;
+        optional int32 field_1 = 1;
+        optional int32 field_2 = 2;
+        optional int32 field_3 = 3;
       }
     EOS
 
-    res1 = TehUnknown::MyResult.new(:field_1 => 'a', :field_2 => 'b')
+    res1 = TehUnknown::MyResult.new(:field_1 => 0xffff, :field_2 => 0xfffe,
+                                   :field_3 => 0xfffd)
     serialized = res1.to_s
 
     # remove field_2 to pretend we never knew about it
     ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
       package tehUnknown;
       message MyResult {
-        optional string field_1 = 1;
+        optional int32 field_1 = 1;
+        optional int32 field_3 = 3;
       }
     EOS
 
@@ -239,10 +252,11 @@ describe ProtocolBuffers, "runtime" do
       res2 = TehUnknown::MyResult.parse(serialized)
     end.should_not raise_error()
 
-    res2.field_1.should == 'a'
+    res2.field_1.should == 0xffff
+    res2.field_3.should == 0xfffd
 
     proc do
-      res2.field_2.should == 'b'
+      res2.field_2.should == 0xfffe
     end.should raise_error(NoMethodError)
 
     serialized2 = res2.to_s
@@ -251,15 +265,15 @@ describe ProtocolBuffers, "runtime" do
     ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
       package tehUnknown;
       message MyResult {
-        optional string field_1 = 1;
-        optional string field_2 = 2;
+        optional int32 field_1 = 1;
+        optional int32 field_2 = 2;
       }
     EOS
 
     res3 = TehUnknown::MyResult.parse(serialized2)
-    res3.field_1.should == 'a'
+    res3.field_1.should == 0xffff
     pending("pass on unknown fields") do
-      res3.field_2.should == 'b'
+      res3.field_2.should == 0xfffe
     end
   end
 
