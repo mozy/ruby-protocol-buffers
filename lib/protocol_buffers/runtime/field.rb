@@ -51,7 +51,8 @@ module ProtocolBuffers
             if value.nil?
               @#{name}.clear
             else
-              @#{name} = value.dup
+              @#{name}.clear
+              value.each { |i| @#{name} << i }
             end
           end
 
@@ -60,14 +61,18 @@ module ProtocolBuffers
       else
         klass.class_eval <<-EOF, __FILE__, __LINE__+1
           def #{name}=(value)
+            field = fields[#{tag}]
             if value.nil?
               @set_fields.delete_at(#{tag})
-              @#{name} = fields[#{tag}].default_value
+              @#{name} = field.default_value
             else
-              field = fields[#{tag}]
               field.check_valid(value)
               @set_fields[#{tag}] = true
               @#{name} = value
+              if @parent_for_notify
+                @parent_for_notify.default_changed(@tag_for_notify)
+                @parent_for_notify = @tag_for_notify = nil
+              end
             end
           end
 
@@ -167,7 +172,7 @@ module ProtocolBuffers
       end
 
       def default_value
-        @opts[:default] || ""
+        @default_value || @default_value = (@opts[:default] || "").freeze
       end
     end
 

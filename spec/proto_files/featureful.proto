@@ -9,6 +9,11 @@ message A {
 
     optional string payload = 1;
     required Payloads payload_type = 2;
+
+    message SubSub {
+      optional string subsub_payload = 1;
+    };
+    optional SubSub subsub1 = 3;
   };
 
   repeated int32 i1 = 1;

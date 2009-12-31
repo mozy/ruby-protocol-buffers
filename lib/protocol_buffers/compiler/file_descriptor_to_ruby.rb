@@ -54,7 +54,7 @@ HEADER
 
     line %{# forward declarations}
     messages.each do |message|
-      line %{class #{name(message.name)} < ::ProtocolBuffers::Message; end}
+      line %{class #{name([@package, message.name])} < ::ProtocolBuffers::Message; end}
     end
     enums.each do |enum|
       line %{module #{name([@package, enum.name])}; end}

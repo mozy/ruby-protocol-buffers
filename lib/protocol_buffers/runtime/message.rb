@@ -59,8 +59,8 @@ module ProtocolBuffers
   # === Singular Fields
   #
   # If you have a singular (optional or repeated) field +foo+ of any non-message
-  # type, you can manipulate the field +foo+ as if it were a regular field. For
-  # example, if +foo+'s type is <tt>int32</tt>, you can say:
+  # type, you can manipulate the field +foo+ as if it were a regular object
+  # attribute.  For example, if +foo+'s type is <tt>int32</tt>, you can say:
   #
   #   message.foo = 123
   #   puts message.foo
@@ -80,17 +80,53 @@ module ProtocolBuffers
   #   message.foo = nil
   #   assert(!message.has_foo?)
   #
+  # === Singular String Fields
+  #
+  # String fields are treated like other singular fields, but note that the
+  # default value for string fields is frozen, so it is effectively an immutable
+  # string. Attempting to modify this default string will raise a TypeError,
+  # so assign a new string to the field instead.
+  #
   # === Singular Message Fields
   #
-  # TODO: the current implementation is pretty broken here. Make it like the
-  # python lib, setting a field on the sub-message sets has_foo?. Hmm, so you
-  # can't assign any value to the field but nil? That's kind of wack.
+  # Message types are a bit special, since they are mutable. Accessing an unset
+  # message field will return a default instance of the message type. Say you
+  # have the following <tt>.proto</tt> definition:
+  #
+  #   message Foo {
+  #     optional Bar bar = 1;
+  #   }
+  #   message Bar {
+  #     optional int32 i = 1;
+  #   }
+  #
+  # To set the message field, you can do either of the following:
+  #
+  #   foo = Foo.new
+  #   assert(!foo.has_bar?)
+  #   foo.bar = Bar.new
+  #   assert(foo.has_bar?)
+  #
+  # Or, to set bar, you can simply assign a value directly to a field within
+  # bar, and - presto! - foo has a bar field:
+  #
+  #   foo = Foo.new
+  #   assert(!foo.has_bar?)
+  #   foo.bar.i = 1
+  #   assert(foo.has_bar?)
+  #
+  # Note that simply reading a field inside bar does not set the field:
+  #
+  #   foo = Foo.new
+  #   assert(!foo.has_bar?)
+  #   puts foo.bar.i
+  #   assert(!foo.has_bar?)
   #
   # === Repeated Fields
   #
   # Repeated fields are represented as an object that acts like an Array.
-  # As with embedded messages, you cannot assign the field directly, but you can
-  # manipulate it. For example, given this message definition:
+  # You cannot assign the field directly, but you can manipulate it. For
+  # example, given this message definition:
   #
   #   message Foo {
   #     repeated int32 nums = 1;
@@ -101,15 +137,38 @@ module ProtocolBuffers
   #   foo = Foo.new
   #   foo.nums << 15
   #   foo.nums.push(32)
-  #   assert foo.nums.length == 2
-  #   assert foo.nums[0] == 15
-  #   assert foo.nums[1] == 32
+  #   assert(foo.nums.length == 2)
+  #   assert(foo.nums[0] == 15)
+  #   assert(foo.nums[1] == 32)
   #   foo.nums.each { |i| puts i }
   #   foo.nums[1] = 56
-  #   assert foo.nums[1] == 56
+  #   assert(foo.nums[1] == 56)
   #
-  # As with singular fields, to clear the field you must set
-  # <tt>foo.nums = nil</tt>.
+  # To clear a repeated field, call the <tt>clear</tt> method, or assign nil to
+  # it like a singular field.
+  #
+  #   foo = Foo.new
+  #   foo.nums << 15
+  #   foo.nums.push(32)
+  #   assert(foo.nums.length == 2)
+  #   foo.nums.clear
+  #   assert(foo.nums.length == 0)
+  #   foo.nums = nil # equivalent to foo.nums.clear
+  #   assert(foo.nums.length == 0)
+  #
+  # You can assign to a repeated field using an array, or any other object that
+  # responds to +each+. This will replace the current contents of the repeated
+  # field.
+  #
+  #   foo = Foo.new
+  #   foo.nums << 15
+  #   foo.nums = [1, 3, 5]
+  #   assert(foo.nums.length == 3)
+  #   assert(foo.nums.to_a == [1,3,5])
+  #
+  # Repeated fields are always set, so <tt>foo.has_nums?</tt> will always be
+  # true. Repeated fields don't take up any space in a serialized message if
+  # they are empty.
   #
   # === Repeated Message Fields
   #
@@ -128,12 +187,12 @@ module ProtocolBuffers
   #   foo = Foo.new
   #   foo.bars << Bar.new(:i => 15)
   #   foo.bars << Bar.new(:i => 32)
-  #   assert foo.bars.length == 2
-  #   assert foo.bars[0].i == 15
-  #   assert foo.bars[1].i == 32
+  #   assert(foo.bars.length == 2)
+  #   assert(foo.bars[0].i == 15)
+  #   assert(foo.bars[1].i == 32)
   #   foo.bars.each { |bar| puts bar.i }
   #   foo.bars[1].i = 56
-  #   assert foo.bars[1].i == 56
+  #   assert(foo.bars[1].i == 56)
   #
   # == Enumerations
   #
@@ -179,11 +238,15 @@ module ProtocolBuffers
 
       fields.each do |tag, field|
         if field.repeated?
-          self.__send__("#{field.name}=", [])
+          self.instance_variable_set("@#{field.name}", [])
           @set_fields[tag] = true # repeated fields are always "set"
         else
-          self.__send__("#{field.name}=", field.default_value)
+          value = field.default_value
+          self.__send__("#{field.name}=", value)
           @set_fields[tag] = false
+          if field.class == Field::MessageField
+            value.notify_on_change(self, tag)
+          end
         end
       end
 
@@ -380,6 +443,19 @@ module ProtocolBuffers
       define_field(:repeated, type, name, tag, opts)
     end
 
+    def notify_on_change(parent, tag)
+      @parent_for_notify = parent
+      @tag_for_notify = tag
+    end
+
+    def default_changed(tag)
+      @set_fields[tag] = true
+      if @parent_for_notify
+        @parent_for_notify.default_changed(@tag_for_notify)
+        @parent_for_notify = @tag_for_notify = nil
+      end
+    end
+
     def valid?
       self.class.valid?(self)
     end
@@ -399,23 +475,9 @@ module ProtocolBuffers
     # method directly.
     def self.gen_methods! # :NODOC:
       @methods_generated = true
-
-      self.class_eval <<-EOF, __FILE__, __LINE__+1
-        def initialize(attributes = {})
-          @set_fields = []
-
-          #{fields.map do |tag, field|
-            if field.repeated?
-              %{@#{field.name} = []
-                @set_fields[#{tag}] = true}
-            else
-              %{@#{field.name} = fields[#{tag}].default_value}
-            end
-          end.join("\n")}
-
-          self.attributes = attributes unless attributes.empty?
-        end
-      EOF
+      # these generated methods have gone away for now -- the infrastructure has
+      # been left in place, since they'll probably make their way back in at
+      # some point.
     end
 
   end

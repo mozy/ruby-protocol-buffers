@@ -62,18 +62,117 @@ describe ProtocolBuffers, "runtime" do
       proc do
         a1.sub1 << "dummy string"
       end.should raise_error(ProtocolBuffers::InvalidFieldValue)
+
+      proc do
+        a1.sub1 = [A::Sub.new, A::Sub.new, 5, A::Sub.new]
+      end.should raise_error(ProtocolBuffers::InvalidFieldValue)
     end
   end
 
   it "detects changes to a sub-message and flags it as set if it wasn't" do
-    pending("figure out what to do about sub-message init") do
-      # the other option is to start sub-messages as nil, and require explicit
-      # instantiation of them. hmm which makes more sense?
-      a1 = Featureful::A.new
-      a1.has_sub2?.should == false
-      a1.sub2.payload = "ohai"
-      a1.has_sub2?.should == true
+    a1 = Featureful::A.new
+    a1.has_sub2?.should == false
+    a1.sub2.payload = "ohai"
+    a1.has_sub2?.should == true
+  end
+
+  it "detects changes to a sub-sub-message and flags up the chain" do
+    a1 = Featureful::A.new
+    a1.sub2.has_subsub1?.should == false
+    a1.has_sub2?.should == false
+    a1.sub2.subsub1.subsub_payload = "ohai"
+    a1.has_sub2?.should == true
+    a1.sub2.has_subsub1?.should == true
+  end
+
+  # sort of redundant test, but let's check the example in the docs for
+  # correctness
+  it "handles singular message fields exactly as in the documentation" do
+    ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
+     package foo;
+      message Foo {
+        optional Bar bar = 1;
+      }
+      message Bar {
+        optional int32 i = 1;
+      }
+    EOS
+
+    foo = Foo::Foo.new
+    foo.has_bar?.should == false
+    foo.bar = Foo::Bar.new
+    foo.has_bar?.should == true
+
+    foo = Foo::Foo.new
+    foo.has_bar?.should == false
+    foo.bar.i = 1
+    foo.has_bar?.should == true
+
+    foo = Foo::Foo.new
+    foo.has_bar?.should == false
+    local_i = foo.bar.i
+    foo.has_bar?.should == false
+  end
+
+  # another example from the docs
+  it "handles repeated field logic" do
+    ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
+     package foo;
+      message Foo {
+        repeated int32 nums = 1;
+      }
+    EOS
+
+    foo = Foo::Foo.new
+    foo.has_nums?.should == true
+    foo.nums << 15
+    foo.has_nums?.should == true
+    foo.nums.push(32)
+    foo.nums.length.should == 2
+    foo.nums[0].should == 15
+    foo.nums[1].should == 32
+    foo.nums[1] = 56
+    foo.nums[1].should == 56
+
+    foo = Foo::Foo.new
+    foo.nums << 15
+    foo.nums.push(32)
+    foo.nums.length.should == 2
+    foo.nums.clear
+    foo.nums.length.should == 0
+    foo.nums << 15
+    foo.nums.length.should == 1
+    foo.nums = nil
+    foo.nums.length.should == 0
+
+    foo = Foo::Foo.new
+    foo.nums << 15
+    foo.nums = [1, 3, 5]
+    foo.nums.length.should == 3
+    foo.nums.to_a.should == [1,3,5]
+  end
+
+  it "can assign any object with an each method to a repeated field" do
+    ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
+     package foo;
+      message Foo {
+        repeated Bar nums = 1;
+      }
+      message Bar {
+        optional int32 i = 1;
+      }
+    EOS
+
+    class Blah
+      def each
+        yield Foo::Bar.new(:i => 1)
+        yield Foo::Bar.new(:i => 3)
+      end
     end
+
+    foo = Foo::Foo.new
+    foo.nums = Blah.new
+    foo.nums.to_a.should == [Foo::Bar.new(:i => 1), Foo::Bar.new(:i => 3)]
   end
 
   it "shouldn't modify the default Message instance like this" do
