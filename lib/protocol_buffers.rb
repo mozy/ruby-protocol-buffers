@@ -1,1 +1,1 @@
-require 'protocol_buffers/message/message'
+require 'protocol_buffers/runtime/message'

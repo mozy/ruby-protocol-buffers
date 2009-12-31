@@ -1,7 +1,7 @@
 require 'stringio'
-require 'protocol_buffers/message/field'
-require 'protocol_buffers/message/encoder'
-require 'protocol_buffers/message/decoder'
+require 'protocol_buffers/runtime/field'
+require 'protocol_buffers/runtime/encoder'
+require 'protocol_buffers/runtime/decoder'
 
 module ProtocolBuffers
 

@@ -3,7 +3,7 @@
 require 'stringio'
 
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), "..", "lib"))
-require 'protocol_buffers/message/field'
+require 'protocol_buffers/runtime/field'
 
 describe ProtocolBuffers, "fields" do
 

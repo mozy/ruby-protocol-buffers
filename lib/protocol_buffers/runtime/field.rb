@@ -1,6 +1,6 @@
 require 'protocol_buffers'
-require 'protocol_buffers/message/enum'
-require 'protocol_buffers/message/varint'
+require 'protocol_buffers/runtime/enum'
+require 'protocol_buffers/runtime/varint'
 require 'protocol_buffers/limited_io'
 
 module ProtocolBuffers
