@@ -56,19 +56,6 @@ describe ProtocolBuffers, "runtime" do
     a1.has_sub2?.should == true
   end
 
-  it "does type checking of repeated fields" do
-    pending("do type checking of repeated fields") do
-      a1 = Featureful::A.new
-      proc do
-        a1.sub1 << "dummy string"
-      end.should raise_error(ProtocolBuffers::InvalidFieldValue)
-
-      proc do
-        a1.sub1 = [A::Sub.new, A::Sub.new, 5, A::Sub.new]
-      end.should raise_error(ProtocolBuffers::InvalidFieldValue)
-    end
-  end
-
   it "detects changes to a sub-message and flags it as set if it wasn't" do
     a1 = Featureful::A.new
     a1.has_sub2?.should == false
@@ -83,6 +70,61 @@ describe ProtocolBuffers, "runtime" do
     a1.sub2.subsub1.subsub_payload = "ohai"
     a1.has_sub2?.should == true
     a1.sub2.has_subsub1?.should == true
+  end
+
+  it "pretends that repeated fields are arrays" do
+    # make sure our RepeatedField class acts like a normal Array
+    ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
+     package foo;
+      message Foo {
+        repeated int32 nums = 1;
+      }
+    EOS
+
+    foo = Foo::Foo.new
+    foo2 = Foo::Foo.new(:nums => [1,2,3])
+    proc do
+      foo.nums << 1
+      foo.nums.class.should == ProtocolBuffers::RepeatedField
+      foo.nums.to_a.class.should == Array
+      (foo.nums & foo2.nums).should == [1]
+      (foo.nums + foo2.nums).should == [1,1,2,3]
+      foo2.nums.map! { |i| i + 1 }
+      foo2.nums.to_a.should == [2,3,4]
+      foo2.nums.class.should == ProtocolBuffers::RepeatedField
+    end.should_not raise_error
+  end
+
+  it "does type checking of repeated fields" do
+    a1 = Featureful::A.new
+    proc do
+      a1.sub1 << Featureful::A::Sub.new
+    end.should_not raise_error(TypeError)
+
+    a1 = Featureful::A.new
+    proc do
+      a1.sub1 << Featureful::A::Sub.new << "dummy string"
+    end.should raise_error(TypeError)
+    a1.sub1.should == [Featureful::A::Sub.new]
+
+    a1 = Featureful::A.new
+    proc do
+      a1.sub1 = [Featureful::A::Sub.new, Featureful::A::Sub.new, 5, Featureful::A::Sub.new]
+    end.should raise_error(TypeError)
+  end
+
+  it "does value checking of repeated fields" do
+    ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
+     package foo;
+      message Foo {
+        repeated int32 nums = 1;
+      }
+    EOS
+
+    foo = Foo::Foo.new
+    proc do
+      foo.nums << 5 << 3 << (1 << 32) # value too large for int32
+    end.should raise_error(ArgumentError)
   end
 
   # sort of redundant test, but let's check the example in the docs for

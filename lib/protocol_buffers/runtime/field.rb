@@ -14,6 +14,85 @@ module ProtocolBuffers
     FIXED32 = 5
   end
 
+  # Acts like an Array, but type-checks each element
+  class RepeatedField < Array # :nodoc:
+    def initialize(field)
+      super()
+      @field = field
+    end
+
+    # ovverride all mutating methods.
+    # I'm sure this will break down on each new major Ruby release, as new
+    # mutating methods are added to Array. Ah, well. caveat emptor.
+
+    def <<(obj)
+      check(obj)
+      super
+    end
+
+    def []=(*args)
+      obj = args.last
+      case obj
+      when nil
+        check(obj) if args.length == 2 && !args.first.is_a?(Range)
+      when Array
+        check_each(obj)
+      else
+        check(obj)
+      end
+      super
+    end
+
+    def collect!(&b)
+      replace(collect(&b))
+    end
+    alias_method :map!, :collect!
+
+    def concat(rhs)
+      check_each(rhs)
+      super
+    end
+
+    def fill(*args, &b)
+      if block_given?
+        super(*args) { |v| check(b.call(v)) }
+      else
+        check(args.first)
+        super
+      end
+    end
+
+    def insert(index, *objs)
+      check_each(objs)
+      super
+    end
+
+    def push(*objs)
+      check_each(objs)
+      super
+    end
+
+    def replace(array)
+      check_each(array)
+      super
+    end
+
+    def unshift(*objs)
+      check_each(objs)
+      super
+    end
+
+    private
+
+    def check(value)
+      @field.check_valid(value)
+    end
+
+    def check_each(iter)
+      iter.each { |value| @field.check_valid(value) }
+    end
+  end
+
   class Field # :nodoc: all
     attr_reader :otype, :name, :tag
 
@@ -52,7 +131,7 @@ module ProtocolBuffers
               @#{name}.clear
             else
               @#{name}.clear
-              value.each { |i| @#{name} << i }
+              value.each { |i| @#{name}.push i }
             end
           end
 
@@ -178,6 +257,12 @@ module ProtocolBuffers
 
     class StringField < BytesField
       # TODO: UTF-8 validation
+      # Make sure to handle this weird case: strings are mutable, so a UTF-8
+      # valid string could be assigned to a repeated field and then modified in
+      # place later on to not be valid UTF-8 anymore.
+      #
+      # Maybe we just punt on this except in Ruby 1.9 where we can rely on the
+      # language ensuring the string is always UTF-8?
     end
 
     class NumericField < Field

@@ -125,8 +125,7 @@ module ProtocolBuffers
   # === Repeated Fields
   #
   # Repeated fields are represented as an object that acts like an Array.
-  # You cannot assign the field directly, but you can manipulate it. For
-  # example, given this message definition:
+  # For example, given this message definition:
   #
   #   message Foo {
   #     repeated int32 nums = 1;
@@ -238,7 +237,7 @@ module ProtocolBuffers
 
       fields.each do |tag, field|
         if field.repeated?
-          self.instance_variable_set("@#{field.name}", [])
+          self.instance_variable_set("@#{field.name}", RepeatedField.new(field))
           @set_fields[tag] = true # repeated fields are always "set"
         else
           value = field.default_value

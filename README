@@ -44,8 +44,6 @@ code is generated.
 === Known Issues
 
 * not tested on Windows
-* type-checking is skipped for repeated fields
-* setting of sub-messages is handled a little oddly, could bite somebody
 * lots of polish still needed in APIs, docs, calling out to +protoc+, etc
 
 == Simple Usage Example
