@@ -9,6 +9,7 @@ module ProtocolBuffers
       raise(ArgumentError, "Need at least one input file") if input_files.empty?
       other_opts = ""
       (opts[:include_dirs] || []).each { |d| other_opts += " -I#{d}" }
+      input_files.each { |f| other_opts += " -I#{File.dirname(f)}" }
 
       cmd = "protoc #{other_opts} -o#{output_filename} #{input_files.join(' ')}"
       rc = system(cmd)
