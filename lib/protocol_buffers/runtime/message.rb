@@ -469,6 +469,17 @@ module ProtocolBuffers
       end
     end
 
+    def remember_unknown_field(tag_int, value)
+      @unknown_fields || @unknown_fields = []
+      @unknown_fields << [tag_int, value]
+    end
+
+    # yields |tag_int, value| pairs
+    def each_unknown_field # :nodoc:
+      return unless @unknown_fields
+      @unknown_fields.each { |tag_int, value| yield tag_int, value }
+    end
+
     # Generate the initialize method using reflection, to improve speed. This is
     # called by the generated .pb.rb code, it's not necessary to call this
     # method directly.

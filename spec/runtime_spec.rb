@@ -379,11 +379,12 @@ describe ProtocolBuffers, "runtime" do
         optional int32 field_1 = 1;
         optional int32 field_2 = 2;
         optional int32 field_3 = 3;
+        optional int32 field_4 = 4;
       }
     EOS
 
     res1 = TehUnknown::MyResult.new(:field_1 => 0xffff, :field_2 => 0xfffe,
-                                   :field_3 => 0xfffd)
+                                   :field_3 => 0xfffd, :field_4 => 0xfffc)
     serialized = res1.to_s
 
     # remove field_2 to pretend we never knew about it
@@ -415,14 +416,15 @@ describe ProtocolBuffers, "runtime" do
       message MyResult {
         optional int32 field_1 = 1;
         optional int32 field_2 = 2;
+        optional int32 field_4 = 4;
       }
     EOS
 
     res3 = TehUnknown::MyResult.parse(serialized2)
     res3.field_1.should == 0xffff
-    pending("pass on unknown fields") do
-      res3.field_2.should == 0xfffe
-    end
+
+    res3.field_2.should == 0xfffe
+    res3.field_4.should == 0xfffc
   end
 
 end

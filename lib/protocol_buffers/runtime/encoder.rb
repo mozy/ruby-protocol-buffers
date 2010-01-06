@@ -16,18 +16,22 @@ module ProtocolBuffers
         tag = (field.tag << 3) | wire_type
 
         if field.repeated?
-          value.each { |i| serialize_field(io, field, i, tag, wire_type) }
+          value.each { |i| serialize_field(io, tag, wire_type,
+                                           field.serialize(i)) }
         else
-          serialize_field(io, field, value, tag, wire_type)
+          serialize_field(io, tag, wire_type, field.serialize(value))
         end
+      end
+
+      message.each_unknown_field do |tag_int, value|
+        wire_type = tag_int & 0b111
+        serialize_field(io, tag_int, wire_type, value)
       end
     end
 
-    def self.serialize_field(io, field, value, tag, wire_type)
+    def self.serialize_field(io, tag, wire_type, serialized)
       # write the tag
       Varint.encode(io, tag)
-
-      serialized = field.serialize(value)
 
       # see comment in decoder.rb about magic numbers
       case wire_type

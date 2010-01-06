@@ -42,12 +42,13 @@ module ProtocolBuffers
           # merge_field handles repeated field logic
           message.merge_field(tag, deserialized, field)
         else
-          # ignore unknown fields
-          # TODO: save them, pass them on
+          # ignore unknown fields, pass them on when re-serializing this message
 
           # special handling -- if it's a LENGTH_DELIMITED field, we need to
           # actually read the IO so that extra bytes aren't left on the wire
-          value.read if wire_type == 2 # LENGTH_DELIMITED
+          value = value.read if wire_type == 2 # LENGTH_DELIMITED
+
+          message.remember_unknown_field(tag_int, value)
         end
       end
 
