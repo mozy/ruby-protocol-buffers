@@ -192,6 +192,10 @@ describe ProtocolBuffers, "runtime" do
     foo.nums = [1, 3, 5]
     foo.nums.length.should == 3
     foo.nums.to_a.should == [1,3,5]
+
+    foo.merge_from_string(foo.to_s)
+    foo.nums.length.should == 6
+    foo.nums.to_a.should == [1,3,5,1,3,5]
   end
 
   it "can assign any object with an each method to a repeated field" do
@@ -234,6 +238,9 @@ describe ProtocolBuffers, "runtime" do
 
   def filled_in_bit
     bit = Featureful::ABitOfEverything.new
+    bit.int64_field.should == 15
+    bit.bool_field.should == false
+    bit.string_field.should == "zomgkittenz"
     bit.double_field = 1.0
     bit.float_field = 2.0
     bit.int32_field = 3

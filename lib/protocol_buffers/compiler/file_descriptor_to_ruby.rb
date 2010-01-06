@@ -170,18 +170,4 @@ HEADER
     "#{s[0,1].capitalize}#{s[1..-1]}" if s
   end
 
-  def output(line)
-    @curfile.write("  " * @indent)
-    @curfile.write(line)
-    @curfile.write("\n")
-  end
-
-  def name_with_package(nm)
-    if @package
-      "#{capfirst(@package)}::#{nm}"
-    else
-      nm
-    end
-  end
-
 end

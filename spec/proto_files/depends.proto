@@ -1,0 +1,5 @@
+package depends;
+
+import "simple.proto";
+
+message Depends {}
