@@ -1,8 +1,11 @@
 /*.pb.rb
 /*.d
 /*.proto
-pkg/*
-prof/*
-tests/*
+coverage
+rdoc
+pkg
+prof
+tests
 d/*
-doc/*
+*.gemspec
+tmp

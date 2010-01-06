@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 require 'stringio'
 
@@ -27,9 +27,9 @@ describe ProtocolBuffers, "fields" do
     pending("do UTF-8 validation") do
       s1 = mkfield(:StringField)
       proc { s1.check_valid("hello") }.should_not raise_error()
+      proc { s1.check_valid("\xff\xff") }.should raise_error(ArgumentError)
       b1 = mkfield(:BytesField)
-      proc { b1.valid?("\xff\xff") }.should_not raise_error()
-      proc { s1.valid?("\xff\xff") }.should raise_error(ArgumentError)
+      proc { b1.check_valid("\xff\xff") }.should_not raise_error()
     end
   end
 

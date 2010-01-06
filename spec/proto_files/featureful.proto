@@ -8,7 +8,7 @@ message A {
     };
 
     optional string payload = 1;
-    required Payloads payload_type = 2;
+    required Payloads payload_type = 2 [default = P1];
 
     message SubSub {
       optional string subsub_payload = 1;

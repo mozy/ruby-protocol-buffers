@@ -419,7 +419,7 @@ module ProtocolBuffers
     end
 
     def self.define_field(otype, type, name, tag, opts = {}) # :NODOC:
-      raise("gen_methods! already called! cannot add more fields") if @methods_generated
+      raise("gen_methods! already called, cannot add more fields") if @methods_generated
       type = type.is_a?(Module) ? type : type.to_sym
       name = name.to_sym
       tag  = tag.to_i

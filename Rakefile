@@ -1,29 +1,57 @@
 require 'rubygems'
-require 'rake/gempackagetask'
+require 'rake'
 
-spec = Gem::Specification.new do |s|
-  s.name = "ruby-protocol-buffers"
-  s.version = "0.1.0"
-  s.author = "Brian Palmer"
-  s.email = "brian@mozy.com"
-  s.homepage = "http://todo"
-  s.platform = Gem::Platform::RUBY
-  s.summary = "Ruby compiler and runtime for the google protocol buffers library. Currently includes a compiler that utilizes protoc."
-
-  s.required_ruby_version = ">=1.8.6"
-
-  s.files = FileList["{bin,lib,ext}/**/*"].to_a
-  s.require_path = 'lib'
-  s.executables << 'ruby-protoc'
-  # disabled to avoid needing to compile a C extension just to boost
-  # performance. TODO: is there a way to tell gems to make the extension
-  # optional?
-  # s.extensions << 'ext/extconf.rb'
+begin
+  require 'metric_fu'
+rescue LoadError
 end
 
-Rake::GemPackageTask.new(spec) do |pkg|
+begin
+  require 'jeweler'
+  Jeweler::Tasks.new do |gem|
+    gem.name = "ruby-protocol-buffers"
+    gem.summary = %Q{Ruby compiler and runtime for the google protocol buffers library.}
+    # gem.description = %Q{description}
+    gem.email = "brian@mozy.com"
+    gem.homepage = "http://todo/"
+    gem.authors = ["Brian Palmer"]
+    gem.version = File.read('VERSION')
+    gem.add_development_dependency "rspec", ">= 1.2.9"
+    gem.required_ruby_version = ">=1.8.6"
+    gem.require_path = 'lib'
+    # disabled to avoid needing to compile a C extension just to boost
+    # performance. TODO: is there a way to tell gems to make the extension
+    # optional?
+    # s.extensions << 'ext/extconf.rb'
+    # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
+  end
+  Jeweler::GemcutterTasks.new
+rescue LoadError
+  puts "Jeweler (or a dependency) not available. Install it with: gem install jeweler"
 end
 
-task :default => "pkg/#{spec.name}-#{spec.version}.gem" do
-    puts "generated latest version"
+require 'spec/rake/spectask'
+Spec::Rake::SpecTask.new(:spec) do |spec|
+  spec.libs << 'lib' << 'spec'
+  spec.pattern = 'spec/**/*_spec.rb'
+end
+
+Spec::Rake::SpecTask.new(:rcov) do |spec|
+  spec.libs << 'lib' << 'spec'
+  spec.pattern = 'spec/**/*_spec.rb'
+  spec.rcov = true
+end
+
+task :spec => :check_dependencies
+
+task :default => :spec
+
+require 'rake/rdoctask'
+Rake::RDocTask.new do |rdoc|
+  version = File.exist?('VERSION') ? File.read('VERSION') : ""
+
+  rdoc.rdoc_dir = 'rdoc'
+  rdoc.title = "ruby-protocol-buffers #{version}"
+  rdoc.rdoc_files.include('README*', 'LICENSE')
+  rdoc.rdoc_files.include('lib/**/*.rb')
 end
