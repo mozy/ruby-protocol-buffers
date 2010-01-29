@@ -1,3 +1,46 @@
+protobuf-ruby (0.8.0) etch; urgency=low
+
+  * fix whitespace
+  * Remove the pure-ruby experimental compiler.
+  * Updated bootstrapping step, and refactored enum support for easier
+    include.
+  * WIP D protobuf compiler
+  * Update README, add empty LICENSE, update Rakefile
+  * Remove support for compiling D protobufs from binary (no runtime
+    yet)
+  * gitignore update
+  * new name: s/protobuf/protocol_buffers and s/Protobuf/ProtocolBuffers
+  * update README with feature list
+  * add compiler helper methods and starting on some tests
+  * Add RDoc documentation to the Message class.
+  * More tests
+  * more tests
+  * More field and runtime tests
+  * Handle .proto files without a package specified
+  * update readme example
+  * more documentation
+  * Example: JSON-to-Protobuf and back
+  * test for unknown fields
+  * Drop InvalidFieldValue exception class, separate type checking/value
+    checking.
+  * validate required fields and improve validation on deserialization
+  * Refactor serialization/deserialization to not be so weird.
+  * dir rename: s/message/runtime
+  * Fix sub-message initialization to work like python.
+  * Type check repeated fields using an Array subclass as a proxy.
+  * make sure we always give protoc a -I option for the input file
+    dir(s)
+  * Version bump to 0.0.0
+  * clean up gem/rake/rdoc/rspec infrastructure using the Jeweler
+    library
+  * improved rcov test coverage, and prune a bit of unused code
+  * store and pass on unknown fields when re-serializing a message
+  * README update
+  * fixing deb dependency for ubuntu
+  * fix deb build
+
+ -- Brian Palmer <brian@mozy.com>  Fri, 29 Jan 2010 17:05:06 +0000
+
 protobuf-ruby (0.1.10) etch; urgency=low
 
   * Support for imports.
