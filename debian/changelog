@@ -1,3 +1,9 @@
+protobuf-ruby (0.8.1) etch; urgency=low
+
+  * whoops fix deb install
+
+ -- Brian Palmer <brian@mozy.com>  Tue,  2 Feb 2010 21:35:43 +0000
+
 protobuf-ruby (0.8.0) etch; urgency=low
 
   * fix whitespace
