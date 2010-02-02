@@ -1,2 +1,3 @@
 bin/ruby-protoc   /usr/bin
 lib/protocol_buffers      /usr/lib/ruby/1.8
+lib/protocol_buffers.rb   /usr/lib/ruby/1.8
