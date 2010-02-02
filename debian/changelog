@@ -1,3 +1,10 @@
+protobuf-ruby (0.8.2) etch; urgency=low
+
+  * Fix deb package for real. I think. Supporting both deb and gem is
+    tricky.
+
+ -- Brian Palmer <brian@mozy.com>  Tue,  2 Feb 2010 22:11:43 +0000
+
 protobuf-ruby (0.8.1) etch; urgency=low
 
   * whoops fix deb install
