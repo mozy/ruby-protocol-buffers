@@ -1,7 +1,5 @@
 #!/usr/bin/env ruby
 
-$LOAD_PATH.unshift("#{File.dirname(__FILE__)}/../lib")
-
 begin
   require 'rubygems'
 rescue LoadError
@@ -31,6 +29,7 @@ filenames = rest
 
 (puts "Missing input file.\n\n"; puts opts; exit) if filenames.empty?
 
+require 'protocol_buffers'
 require 'protocol_buffers/compiler'
 
 protocfile = Tempfile.new("ruby-protoc")
