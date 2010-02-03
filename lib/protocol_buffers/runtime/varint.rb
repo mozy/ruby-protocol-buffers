@@ -28,7 +28,7 @@ module ProtocolBuffers
         shift = 0
         loop do
           raise(DecodeError, "too many bytes when decoding varint") if shift >= 64
-          byte = io.getbyte
+          byte = io.getc.ord
           int_val |= (byte & 0b0111_1111) << shift
           shift += 7
           # int_val -= (1 << 64) if int_val > UINT64_MAX
@@ -52,4 +52,12 @@ module ProtocolBuffers
 
   end
 
+end
+
+# fix for 1.8 <-> 1.9 compat
+unless 'a'.respond_to?(:ord)
+  class String; def ord; self[0]; end; end
+end
+unless (1).respond_to?(:ord)
+  class Fixnum; def ord; self; end; end
 end

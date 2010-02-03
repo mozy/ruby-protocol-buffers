@@ -24,4 +24,10 @@ class LimitedIO < Struct.new(:parent, :limit)
     parent.getbyte
   end
 
+  def getc
+    return nil if limit == 0
+    self.limit -= 1
+    parent.getc
+  end
+
 end
