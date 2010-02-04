@@ -1,3 +1,9 @@
+protobuf-ruby (0.8.3) etch; urgency=low
+
+  * fix for ruby 1.8 <-> 1.9 compat
+
+ -- Brian Palmer <brian@mozy.com>  Thu,  4 Feb 2010 00:02:23 +0000
+
 protobuf-ruby (0.8.2) etch; urgency=low
 
   * Fix deb package for real. I think. Supporting both deb and gem is
