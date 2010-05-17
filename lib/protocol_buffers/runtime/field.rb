@@ -299,6 +299,16 @@ module ProtocolBuffers
       def initialize(*a); super; end
     end
 
+    class SignedVarintField < VarintField
+      def deserialize(value)
+        if value > max
+          value - (1<<bits)
+        else
+          value
+        end
+      end
+    end
+
     class Uint32Field < VarintField
       def max
         0xFFFFFFFF
@@ -343,13 +353,17 @@ module ProtocolBuffers
       end
     end
 
-    class Int32Field < VarintField
+    class Int32Field < SignedVarintField
       def min
         -(1 << 31)
       end
 
       def max
         (1 << 31) - 1
+      end
+
+      def bits
+        32
       end
     end
 
@@ -383,13 +397,17 @@ module ProtocolBuffers
       end
     end
 
-    class Int64Field < VarintField
+    class Int64Field < SignedVarintField
       def min
         -(1 << 63)
       end
 
       def max
         (1 << 63) - 1
+      end
+
+      def bits
+        64
       end
     end
 

@@ -31,7 +31,6 @@ module ProtocolBuffers
           byte = io.getc.ord
           int_val |= (byte & 0b0111_1111) << shift
           shift += 7
-          # int_val -= (1 << 64) if int_val > UINT64_MAX
           return int_val if (byte & 0b1000_0000) == 0
         end
       end
