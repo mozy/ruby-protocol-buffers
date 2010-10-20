@@ -1,0 +1,10 @@
+package foo;
+
+enum Bar {
+  A = 1;
+  B = 2;
+}
+
+message Baz {
+  optional Bar bar = 1;
+}

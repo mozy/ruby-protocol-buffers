@@ -39,10 +39,6 @@ HEADER
       descriptor.message_type.each do |message|
         dump_message(message)
       end
-
-      descriptor.enum_type.each do |enum|
-        dump_enum(enum)
-      end
     end
 
   end
@@ -56,10 +52,16 @@ HEADER
     messages.each do |message|
       line %{class #{name([@package, message.name])} < ::ProtocolBuffers::Message; end}
     end
-    enums.each do |enum|
-      line %{module #{name([@package, enum.name])}; end}
+
+    if enums.empty?
+      line
+    else
+      line
+      line %{# enums}
+      enums.each do |enum|
+        dump_enum(enum)
+      end
     end
-    line
   end
 
   def line(str = nil)
@@ -118,9 +120,6 @@ HEADER
 
       line %{# nested messages} unless message.nested_type.empty?
       message.nested_type.each { |inner| dump_message(inner) }
-
-      line %{# nested enums} unless message.enum_type.empty?
-      message.enum_type.each { |inner| dump_enum(inner) }
 
       message.field.each do |field|
         typename = field_typename(field)
