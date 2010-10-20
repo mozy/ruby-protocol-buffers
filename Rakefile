@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'rake'
+require 'spec'
 
 begin
   require 'metric_fu'
@@ -11,9 +12,7 @@ begin
   Jeweler::Tasks.new do |gem|
     gem.name = "ruby-protocol-buffers"
     gem.summary = %Q{Ruby compiler and runtime for the google protocol buffers library.}
-    # gem.description = %Q{description}
-    gem.email = "brian@mozy.com"
-    gem.homepage = "http://todo/"
+    gem.homepage = "http://github.com/mozy/ruby-protocol-buffers"
     gem.authors = ["Brian Palmer"]
     gem.version = File.read('VERSION')
     gem.add_development_dependency "rspec", ">= 1.2.9"
