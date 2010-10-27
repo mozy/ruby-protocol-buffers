@@ -58,7 +58,7 @@ module ProtocolBuffers
   #
   # === Singular Fields
   #
-  # If you have a singular (optional or repeated) field +foo+ of any non-message
+  # If you have a singular (optional or required) field +foo+ of any non-message
   # type, you can manipulate the field +foo+ as if it were a regular object
   # attribute.  For example, if +foo+'s type is <tt>int32</tt>, you can say:
   #

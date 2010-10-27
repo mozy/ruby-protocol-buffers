@@ -1,11 +1,11 @@
-= Ruby Protocol Buffers
+# Ruby Protocol Buffers
 
 Protocol Buffers are a way of encoding structured data in an efficient yet
 extensible format. Google uses Protocol Buffers for almost all of its internal
 RPC protocols and file formats.
 
-This library has two components: a compiler to turn <tt>.proto</tt> definitions
-into Ruby modules (extension <tt>.pb.rb</tt>), and a runtime to use protocol
+This library has two components: a compiler to turn `.proto` definitions
+into Ruby modules (extension `.pb.rb`), and a runtime to use protocol
 buffers defined by these modules. The compiler relies on Google's C++ based
 compiler (+protoc+) for much of the heavy lifting -- this has huge advantages in
 ensuring compatibility and correctness.
@@ -19,9 +19,21 @@ Because this is a tool for generating code, the RDoc documentation is a bit
 unusual. See the text in the ProtocolBuffers::Message class for details on what
 code is generated.
 
-== Features
+## Installation
 
-=== Supported Features
+You'll need protoc version >= 2.2 (the Google Protocol Buffer compiler)
+installed in the environment where you will be compiling protocol buffers. This
+is only needed for compiling, you don't need it installed to use the generated
+`.pb.rb` files. You do need this Ruby library installed to use the
+`.pb.rb` files, for the runtime support.
+
+If you use RubyGems, you can install via:
+
+    $ sudo gem install ruby-protocol-buffers
+
+## Features
+
+### Supported Features
 
 * messages, enums, field types, all basic protobuf features
 * packages
@@ -29,54 +41,42 @@ code is generated.
 * nested types
 * passing on unknown fields when re-serializing a message
 
-=== Unsupported Features
+### Unsupported Features
 
 * extensions
 * packed option (could be useful)
 * accessing custom options
 
-=== Probably Never to be Supported
+### Probably Never to be Supported
 
 * RPC stubbing
 * deprecated protocol features (e.g. groups)
 * the unsupported options (java_*, optimize_for, message_set_wire_format, deprecated)
 
-=== Known Issues
+### Known Issues
 
 * not tested on Windows
 * lots of polish still needed in APIs, docs, calling out to +protoc+, etc
 
-== Simple Usage Example
+## Simple Usage Example
 
-  $ echo "package Test; message MyMessage { optional string myField = 1; }" > test.proto
-  $ bin/ruby-protoc test.proto
-  $ irb -I./lib -rtest.pb
-  > msg = Test::MyMessage.new(:myField => 'zomgkittenz')
-  => #<Test::MyMessage myField="zomgkittenz">
-  > Test::MyMessage.parse(msg.to_s) == msg
-  => true
+    $ echo "package Test; message MyMessage { optional string myField = 1; }" > test.proto
+    $ bin/ruby-protoc test.proto
+    $ irb -I./lib -rtest.pb
+    > msg = Test::MyMessage.new(:myField => 'zomgkittenz')
+    => #<Test::MyMessage myField="zomgkittenz">
+    > Test::MyMessage.parse(msg.to_s) == msg
+    => true
 
-== Authors
+## Authors
 
 Brian Palmer (http://github.com/codekitchen)
 
-== Installation
-
-You'll need protoc version >= 2.2 (the Google Protocol Buffer compiler)
-installed in the environment where you will be compiling protocol buffers. This
-is only needed for compiling, you don't need it installed to use the generated
-<tt>.pb.rb</tt> files. You do need this Ruby library installed to use the
-<tt>.pb.rb</tt> files, for the runtime support.
-
-If you use RubyGems, you can install via:
-
-  $ sudo gem install ruby-protocol-buffers
-
-== Source
+## Source
 
 http://github.com/mozy/ruby-protocol-buffers
 
-== License
+## License
 
 See the LICENSE file included with the distribution for licensing and
 copyright details.
