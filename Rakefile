@@ -18,6 +18,8 @@ begin
     gem.add_development_dependency "rspec", ">= 1.2.9"
     gem.required_ruby_version = ">=1.8.6"
     gem.require_path = 'lib'
+    gem.extra_rdoc_files << "Changelog.md"
+    gem.files << "Changelog.md"
     # disabled to avoid needing to compile a C extension just to boost
     # performance. TODO: is there a way to tell gems to make the extension
     # optional?
