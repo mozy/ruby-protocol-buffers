@@ -53,11 +53,6 @@ If you use RubyGems, you can install via:
 * deprecated protocol features (e.g. groups)
 * the unsupported options (java_*, optimize_for, message_set_wire_format, deprecated)
 
-### Known Issues
-
-* not tested on Windows
-* lots of polish still needed in APIs, docs, calling out to +protoc+, etc
-
 ## Simple Usage Example
 
     $ echo "package Test; message MyMessage { optional string myField = 1; }" > test.proto
