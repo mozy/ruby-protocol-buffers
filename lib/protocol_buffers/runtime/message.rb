@@ -267,7 +267,7 @@ module ProtocolBuffers
 
     # Serialize this Message to a String and return it.
     def serialize_to_string
-      sio = StringIO.new
+      sio = ProtocolBuffers.bin_sio
       serialize(sio)
       return sio.string
     end
@@ -285,7 +285,7 @@ module ProtocolBuffers
     def parse(io_or_string)
       io = io_or_string
       if io.is_a?(String)
-        io = StringIO.new(io)
+        io = ProtocolBuffers.bin_sio(io)
       end
       Decoder.decode(io, self)
       return self
@@ -396,7 +396,7 @@ module ProtocolBuffers
     end
 
     def inspect
-      ret = StringIO.new
+      ret = ProtocolBuffers.bin_sio
       ret << "#<#{self.class.name}"
       fields.each do |tag, field|
         ret << " #{field.name}=#{field.inspect_value(self.__send__(field.name))}"

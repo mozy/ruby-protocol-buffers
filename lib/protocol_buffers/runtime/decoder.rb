@@ -15,7 +15,7 @@ module ProtocolBuffers
         field = fields[tag]
 
         if field && wire_type != field.wire_type
-          raise(DecodeError, "incorrect wire type for tag: #{field.tag}")
+          raise(DecodeError, "incorrect wire type for tag: #{field.tag}, expected #{field.wire_type} but got #{wire_type}\n#{field.inspect}")
         end
 
         # replacing const lookups with hard-coded ints removed an entire 10%

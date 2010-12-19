@@ -26,7 +26,7 @@ describe ProtocolBuffers, "fields" do
   it "properly encodes and decodes negative varints" do
     val = -2082844800000000
     str = "\200\300\313\274\236\265\246\374\377\001"
-    sio = StringIO.new
+    sio = ProtocolBuffers.bin_sio
     ProtocolBuffers::Varint.encode(sio, val)
     sio.string.should == str
     sio.rewind

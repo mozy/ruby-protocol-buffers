@@ -20,7 +20,7 @@ describe ProtocolBuffers, "runtime" do
 
     msg1.test_field = "zomgkittenz"
 
-    ser = StringIO.new(msg1.to_s)
+    ser = ProtocolBuffers.bin_sio(msg1.to_s)
     msg2 = Simple::Test1.parse(ser)
     msg2.test_field.should == "zomgkittenz"
     msg2.should == msg1
