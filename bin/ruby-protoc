@@ -33,6 +33,7 @@ require 'protocol_buffers'
 require 'protocol_buffers/compiler'
 
 protocfile = Tempfile.new("ruby-protoc")
+protocfile.binmode
 ProtocolBuffers::Compiler.compile(protocfile.path, filenames, :include_dirs => include_dirs)
 descriptor_set = FileDescriptorSet.parse(protocfile)
 protocfile.close(true)

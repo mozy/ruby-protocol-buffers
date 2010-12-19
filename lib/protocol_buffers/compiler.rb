@@ -22,12 +22,14 @@ module ProtocolBuffers
       require 'protocol_buffers/compiler/file_descriptor_to_ruby'
 
       tempfile = Tempfile.new("protocol_buffers_spec")
+      tempfile.binmode
       compile(tempfile.path, input_files, opts)
       descriptor_set = FileDescriptorSet.parse(tempfile)
       tempfile.close(true)
       descriptor_set.file.each do |file|
         parsed = FileDescriptorToRuby.new(file)
         output = Tempfile.new("protocol_buffers_spec_parsed")
+        output.binmode
         parsed.write(output)
         output.flush
         load output.path
@@ -39,6 +41,7 @@ module ProtocolBuffers
     def self.compile_and_load_string(input, opts = {})
       require 'tempfile'
       tempfile = Tempfile.new("protocol_buffers_load_string")
+      tempfile.binmode
       tempfile.write(input)
       tempfile.flush
       (opts[:include_dirs] ||= []) << File.dirname(tempfile.path)
