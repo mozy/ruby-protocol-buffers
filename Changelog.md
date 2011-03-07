@@ -1,3 +1,7 @@
+# ruby-protocol-buffers 1.0.0
+
+  * The library has reached to 1.0 status, hurrah
+
 # ruby-protocol-buffers 0.8.5
 
   * Add support for Microsoft Windows (tested on Windows 7)
