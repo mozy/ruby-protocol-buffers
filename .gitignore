@@ -1,6 +1,9 @@
 /*.pb.rb
 /*.d
 /*.proto
+.yardoc/
+Gemfile.lock
+doc/*
 coverage
 rdoc
 pkg

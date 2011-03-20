@@ -1,56 +1,20 @@
-require 'rubygems'
-require 'rake'
-require 'spec'
+require 'bundler'
+Bundler::GemHelper.install_tasks
 
-begin
-  require 'metric_fu'
-rescue LoadError
+task :default => 'spec'
+
+require 'rspec/core/rake_task'
+RSpec::Core::RakeTask.new(:spec) do |t|
+  t.rspec_opts = "-c -f d"
+end
+RSpec::Core::RakeTask.new(:rcov) do |t|
+  t.rspec_opts = "-c -f d"
+  t.rcov = true
+  t.rcov_opts = ["--exclude", "spec,gems/,rubygems/"]
 end
 
-begin
-  require 'jeweler'
-  Jeweler::Tasks.new do |gem|
-    gem.name = "ruby-protocol-buffers"
-    gem.summary = %Q{Ruby compiler and runtime for the google protocol buffers library.}
-    gem.homepage = "http://github.com/mozy/ruby-protocol-buffers"
-    gem.authors = ["Brian Palmer"]
-    gem.version = File.read('VERSION')
-    gem.add_development_dependency "rspec", ">= 1.2.9"
-    gem.required_ruby_version = ">=1.8.6"
-    gem.require_path = 'lib'
-    gem.extra_rdoc_files << "Changelog.md"
-    gem.files << "Changelog.md"
-    # disabled to avoid needing to compile a C extension just to boost
-    # performance. TODO: is there a way to tell gems to make the extension
-    # optional?
-    # s.extensions << 'ext/extconf.rb'
-    # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
-  end
-  Jeweler::GemcutterTasks.new
-rescue LoadError
-  # You'll need to install Jeweler to build packages
-end
-
-require 'spec/rake/spectask'
-Spec::Rake::SpecTask.new(:spec) do |spec|
-  spec.libs << 'lib' << 'spec'
-  spec.pattern = 'spec/**/*_spec.rb'
-end
-
-Spec::Rake::SpecTask.new(:rcov) do |spec|
-  spec.libs << 'lib' << 'spec'
-  spec.pattern = 'spec/**/*_spec.rb'
-  spec.rcov = true
-end
-
-task :default => :spec
-
-require 'rake/rdoctask'
-Rake::RDocTask.new do |rdoc|
-  version = File.exist?('VERSION') ? File.read('VERSION') : ""
-
-  rdoc.rdoc_dir = 'rdoc'
-  rdoc.title = "ruby-protocol-buffers #{version}"
-  rdoc.rdoc_files.include('README*', 'LICENSE')
-  rdoc.rdoc_files.include('lib/**/*.rb')
+require 'yard'
+YARD::Rake::YardocTask.new(:doc) do |t|
+  version = ProtocolBuffers::VERSION
+  t.options = ["--title", "ruby protocol buffers #{version}", "--files", "LICENSE,Changelog.md"]
 end
