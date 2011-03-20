@@ -11,11 +11,15 @@ require 'tempfile'
 ruby_out = "."
 include_dirs = []
 
+require 'protocol_buffers'
+require 'protocol_buffers/compiler'
+
 opts = OptionParser.new
 opts.banner = <<BANNER
 Usage: #{opts.program_name} [OPTION] PROTO_FILES
 Parse PROTO_FILES and generate output based on the options given:
 BANNER
+opts.version = ProtocolBuffers::VERSION
 
 opts.on("-o", "--ruby_out", "=OUT_DIR",
         "generates ruby code in OUT_DIR", "[defaults to pwd]",
@@ -28,9 +32,6 @@ rest = opts.parse(ARGV)
 filenames = rest
 
 (puts "Missing input file.\n\n"; puts opts; exit) if filenames.empty?
-
-require 'protocol_buffers'
-require 'protocol_buffers/compiler'
 
 protocfile = Tempfile.new("ruby-protoc")
 protocfile.binmode

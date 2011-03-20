@@ -1,3 +1,7 @@
+# ruby-protocol-buffers 1.0.1
+
+  * Treat unknown enum values as unknown fields
+
 # ruby-protocol-buffers 1.0.0
 
   * The library has reached to 1.0 status, hurrah
