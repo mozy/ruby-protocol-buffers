@@ -6,12 +6,13 @@ $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), "..", "lib"))
 require 'protocol_buffers'
 require 'protocol_buffers/compiler'
 
-ProtocolBuffers::Compiler.compile_and_load(
-  File.join(File.dirname(__FILE__), "proto_files", "simple.proto"))
-ProtocolBuffers::Compiler.compile_and_load(
-  File.join(File.dirname(__FILE__), "proto_files", "featureful.proto"))
-
 describe ProtocolBuffers, "runtime" do
+  before(:each) do
+    ProtocolBuffers::Compiler.compile_and_load(
+      File.join(File.dirname(__FILE__), "proto_files", "simple.proto"))
+    ProtocolBuffers::Compiler.compile_and_load(
+      File.join(File.dirname(__FILE__), "proto_files", "featureful.proto"))
+  end
 
   it "can handle basic operations" do
 
@@ -354,18 +355,17 @@ describe ProtocolBuffers, "runtime" do
     ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
       package tehUnknown;
       message MyResult {
-        optional int32 field_1 = 1;
+        optional int64 field_1 = 1;
       }
     EOS
 
-    res1 = TehUnknown::MyResult.new(:field_1 => 5)
+    res1 = TehUnknown::MyResult.new(:field_1 => (2**33))
     buf = res1.to_s
 
     ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
       package tehUnknown;
       message MyResult {
-        enum E { A = 1; }
-        optional E field_1 = 1;
+        optional int32 field_1 = 1;
       }
     EOS
 
@@ -425,6 +425,58 @@ describe ProtocolBuffers, "runtime" do
 
     res3.field_2.should == 0xfffe
     res3.field_4.should == 0xfffc
+  end
+
+  it "ignores and passes on unknown enum values" do
+    ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
+      package tehUnknown;
+      message MyResult {
+        enum E {
+          V1 = 1;
+          V2 = 2;
+        }
+        optional E field_1 = 1;
+      }
+    EOS
+
+    res1 = TehUnknown::MyResult.new(:field_1 => TehUnknown::MyResult::E::V2)
+    serialized = res1.to_s
+
+    # remove field_2 to pretend we never knew about it
+    ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
+      package tehUnknown;
+      message MyResult {
+        enum E {
+          V1 = 1;
+        }
+        optional E field_1 = 1;
+      }
+    EOS
+
+    res2 = nil
+    proc do
+      res2 = TehUnknown::MyResult.parse(serialized)
+    end.should_not raise_error()
+
+    res2.value_for_tag?(1).should be_false
+    res2.unknown_field_count.should == 1
+
+    serialized2 = res2.to_s
+
+    # now we know about field_2 again
+    ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
+      package tehUnknown;
+      message MyResult {
+        enum E {
+          V1 = 1;
+          V2 = 2;
+        }
+        optional E field_1 = 1;
+      }
+    EOS
+
+    res3 = TehUnknown::MyResult.parse(serialized2)
+    res3.field_1.should == 2
   end
 
 end

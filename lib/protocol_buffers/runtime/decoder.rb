@@ -38,10 +38,21 @@ module ProtocolBuffers
         end
 
         if field
-          deserialized = field.deserialize(value)
-          # merge_field handles repeated field logic
-          message.merge_field(tag, deserialized, field)
-        else
+          begin
+            deserialized = field.deserialize(value)
+            # merge_field handles repeated field logic
+            message.merge_field(tag, deserialized, field)
+          rescue ArgumentError
+            # for enum fields, treat bad values as unknown fields
+            if field.is_a?(Field::EnumField)
+              field = nil
+            else
+              raise
+            end
+          end
+        end
+
+        unless field
           # ignore unknown fields, pass them on when re-serializing this message
 
           # special handling -- if it's a LENGTH_DELIMITED field, we need to

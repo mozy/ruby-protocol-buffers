@@ -1,5 +1,7 @@
 package featureful;
 
+option optimize_for = LITE_RUNTIME;
+
 message A {
   message Sub {
     enum Payloads {
