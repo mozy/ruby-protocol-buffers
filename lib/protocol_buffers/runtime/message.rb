@@ -213,9 +213,8 @@ module ProtocolBuffers
   #   end
   #
   # An exception will be thrown if an enum field is assigned a value not in the
-  # enum. Right now, this includes throwing an exception while parsing. This may
-  # change in the future to match the C++ behavior of treating it as an unknown
-  # tag number.
+  # enum. If an unknown enum value is found while parsing a message, this is
+  # treated like an unknown tag id. This matches the C++ library behavior.
   #
   # == Extensions
   #
