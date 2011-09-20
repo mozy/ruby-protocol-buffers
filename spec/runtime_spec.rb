@@ -8,6 +8,14 @@ require 'protocol_buffers/compiler'
 
 describe ProtocolBuffers, "runtime" do
   before(:each) do
+    # clear our namespaces
+    Object.send(:remove_const, :Simple) if defined?(Simple)
+    Object.send(:remove_const, :Featureful) if defined?(Featureful)
+    Object.send(:remove_const, :Foo) if defined?(Foo)
+    Object.send(:remove_const, :TehUnknown) if defined?(TehUnknown)
+    Object.send(:remove_const, :TehUnknown2) if defined?(TehUnknown2)
+    Object.send(:remove_const, :TehUnknown3) if defined?(TehUnknown3)
+
     ProtocolBuffers::Compiler.compile_and_load(
       File.join(File.dirname(__FILE__), "proto_files", "simple.proto"))
     ProtocolBuffers::Compiler.compile_and_load(
@@ -341,14 +349,14 @@ describe ProtocolBuffers, "runtime" do
 
     # now make field_1 required
     ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
-      package tehUnknown;
+      package tehUnknown2;
       message MyResult {
         required string field_1 = 1;
         optional string field_2 = 2;
       }
     EOS
 
-    proc { TehUnknown::MyResult.parse(buf) }.should raise_error(ProtocolBuffers::DecodeError)
+    proc { TehUnknown2::MyResult.parse(buf) }.should raise_error(ProtocolBuffers::DecodeError)
   end
 
   it "enforces valid values on deserialization" do
@@ -363,13 +371,13 @@ describe ProtocolBuffers, "runtime" do
     buf = res1.to_s
 
     ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
-      package tehUnknown;
+      package tehUnknown2;
       message MyResult {
         optional int32 field_1 = 1;
       }
     EOS
 
-    proc { TehUnknown::MyResult.parse(buf) }.should raise_error(ProtocolBuffers::DecodeError)
+    proc { TehUnknown2::MyResult.parse(buf) }.should raise_error(ProtocolBuffers::DecodeError)
   end
 
   it "ignores and passes on unknown fields" do
@@ -389,7 +397,7 @@ describe ProtocolBuffers, "runtime" do
 
     # remove field_2 to pretend we never knew about it
     ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
-      package tehUnknown;
+      package tehUnknown2;
       message MyResult {
         optional int32 field_1 = 1;
         optional int32 field_3 = 3;
@@ -398,7 +406,7 @@ describe ProtocolBuffers, "runtime" do
 
     res2 = nil
     proc do
-      res2 = TehUnknown::MyResult.parse(serialized)
+      res2 = TehUnknown2::MyResult.parse(serialized)
     end.should_not raise_error()
 
     res2.field_1.should == 0xffff
@@ -412,7 +420,7 @@ describe ProtocolBuffers, "runtime" do
 
     # now we know about field_2 again
     ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
-      package tehUnknown;
+      package tehUnknown3;
       message MyResult {
         optional int32 field_1 = 1;
         optional int32 field_2 = 2;
@@ -420,7 +428,7 @@ describe ProtocolBuffers, "runtime" do
       }
     EOS
 
-    res3 = TehUnknown::MyResult.parse(serialized2)
+    res3 = TehUnknown3::MyResult.parse(serialized2)
     res3.field_1.should == 0xffff
 
     res3.field_2.should == 0xfffe
@@ -444,7 +452,7 @@ describe ProtocolBuffers, "runtime" do
 
     # remove field_2 to pretend we never knew about it
     ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
-      package tehUnknown;
+      package tehUnknown2;
       message MyResult {
         enum E {
           V1 = 1;
@@ -455,7 +463,7 @@ describe ProtocolBuffers, "runtime" do
 
     res2 = nil
     proc do
-      res2 = TehUnknown::MyResult.parse(serialized)
+      res2 = TehUnknown2::MyResult.parse(serialized)
     end.should_not raise_error()
 
     res2.value_for_tag?(1).should be_false
@@ -465,7 +473,7 @@ describe ProtocolBuffers, "runtime" do
 
     # now we know about field_2 again
     ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
-      package tehUnknown;
+      package tehUnknown3;
       message MyResult {
         enum E {
           V1 = 1;
@@ -475,7 +483,7 @@ describe ProtocolBuffers, "runtime" do
       }
     EOS
 
-    res3 = TehUnknown::MyResult.parse(serialized2)
+    res3 = TehUnknown3::MyResult.parse(serialized2)
     res3.field_1.should == 2
   end
 

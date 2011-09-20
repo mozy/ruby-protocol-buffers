@@ -29,10 +29,6 @@ HEADER
     @io.write("\n") unless descriptor.dependency.empty?
 
     # in_namespace correctly handles the case where @package.nil?
-    unless @package.empty?
-      @io.write("# Reload support\nObject.__send__(:remove_const, :#{@package}) if defined?(#{@package})\n\n")
-    end
-
     in_namespace("module", @package) do
       declare(descriptor.message_type, descriptor.enum_type)
 
