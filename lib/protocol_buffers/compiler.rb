@@ -9,7 +9,6 @@ module ProtocolBuffers
       raise(ArgumentError, "Need at least one input file") if input_files.empty?
       other_opts = ""
       (opts[:include_dirs] || []).each { |d| other_opts += " -I#{d}" }
-      input_files.each { |f| other_opts += " -I#{File.dirname(f)}" }
 
       cmd = "protoc #{other_opts} -o#{output_filename} #{input_files.join(' ')}"
       rc = system(cmd)
@@ -21,8 +20,14 @@ module ProtocolBuffers
       require 'tempfile'
       require 'protocol_buffers/compiler/file_descriptor_to_ruby'
 
+      input_files = Array(input_files) unless input_files.is_a?(Array)
+
       tempfile = Tempfile.new("protocol_buffers_spec")
       tempfile.binmode
+
+      include_dirs = (opts[:include_dirs] ||= [])
+      include_dirs.concat(input_files.map { |i| File.dirname(i) }.uniq)
+
       compile(tempfile.path, input_files, opts)
       descriptor_set = FileDescriptorSet.parse(tempfile)
       tempfile.close(true)
