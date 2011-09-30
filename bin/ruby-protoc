@@ -45,9 +45,11 @@ end
 
 descriptor_set.file.each do |file_descriptor|
 
+  fullpath = filenames[filenames.index{|path| path.include? file_descriptor.name}]
+
   if ruby_out
-    path = File.join(ruby_out,
-                     File.basename(file_descriptor.name, ".proto") + ".pb.rb")
+    path = File.join(ruby_out,File.dirname(fullpath),File.basename(file_descriptor.name, ".proto") + ".pb.rb")
+    FileUtils.mkpath(File.dirname(path)) unless Dir.exists?(File.dirname(path))
     File.open(path, "wb") do |file|
       dumper = FileDescriptorToRuby.new(file_descriptor)
       dumper.write(file)
