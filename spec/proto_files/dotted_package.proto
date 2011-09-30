@@ -1,0 +1,9 @@
+package polka.dot.bikini;
+
+message Test1 {
+  optional string test_field = 1;
+  
+  message Test1Child {
+    optional string test_child_field = 1;
+  }
+};

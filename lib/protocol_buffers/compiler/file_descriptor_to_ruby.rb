@@ -8,7 +8,7 @@ class FileDescriptorToRuby < Struct.new(:descriptor)
 
   def initialize(descriptor)
     super
-    @package = capfirst(descriptor.package_)
+    @package_modules = descriptor.package_ ? descriptor.package_.split('.') : []
     @ns = []
   end
 
@@ -22,21 +22,21 @@ class FileDescriptorToRuby < Struct.new(:descriptor)
 require 'protocol_buffers'
 
 HEADER
+
     descriptor.dependency.each do |dep|
       path = File.basename(dep, ".proto") + ".pb"
       @io.write("begin; require '#{path}'; rescue LoadError; end\n")
     end
     @io.write("\n") unless descriptor.dependency.empty?
 
-    # in_namespace correctly handles the case where @package.nil?
-    in_namespace("module", @package) do
+    in_namespace("module", @package_modules) do
       declare(descriptor.message_type, descriptor.enum_type)
 
       descriptor.message_type.each do |message|
         dump_message(message)
       end
     end
-
+    
   end
 
   protected
@@ -46,7 +46,7 @@ HEADER
 
     line %{# forward declarations}
     messages.each do |message|
-      line %{class #{name([@package, message.name])} < ::ProtocolBuffers::Message; end}
+      line %{class #{name([@package_modules, message.name].flatten)} < ::ProtocolBuffers::Message; end}
     end
 
     if enums.empty?
@@ -67,14 +67,17 @@ HEADER
     end
     @io.write("\n")
   end
-
-  def in_namespace(type, name, rest = "")
-    if !name || name == ""
-      yield
-    else
-      line "#{type} #{capfirst(name)}#{rest}"
-      @ns.push name
-      yield
+  
+  def in_namespace(type, namespace, rest = "")
+    
+    namespace_array = [namespace].flatten
+    
+    namespace_array.each do |n|
+      line "#{type} #{camelize(n)}#{rest}"
+      @ns.push n
+    end
+    yield
+    namespace_array.each do |n|
       @ns.pop
       line "end"
     end
@@ -83,7 +86,7 @@ HEADER
   def name(parts)
     ns = @ns.dup
     (parts.shift; ns.shift) while !parts.empty? && parts.first == ns.first
-    parts.map { |p| capfirst(p) }.join("::")
+    parts.map { |p| camelize(p) }.join("::")
   end
 
   LABEL_MAPPING = {
@@ -143,7 +146,7 @@ HEADER
   end
 
   def field_typename(field)
-    TYPE_MAPPING[field.type] || field.type_name.split(".").map { |t| capfirst(t) }.join("::")
+    TYPE_MAPPING[field.type] || field.type_name.split(".").map { |t| camelize(t) }.join("::")
   end
 
   # TODO: this probably doesn't work for all default values, expand
@@ -163,6 +166,10 @@ HEADER
 
   def capfirst(s)
     "#{s[0,1].capitalize}#{s[1..-1]}" if s
+  end
+  
+  def camelize(lower_case_and_underscored_word)
+    lower_case_and_underscored_word.to_s.gsub(/(?:^|_)(.)/) { $1.upcase }
   end
 
 end

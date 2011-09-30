@@ -1,0 +1,11 @@
+package under_score;
+
+message UnderTest {
+  optional string test_field = 1;
+  
+  message UnderTestChild {
+    optional string test_child_field = 1;
+  }
+  
+  repeated UnderTest.UnderTestChild children = 2;
+};
