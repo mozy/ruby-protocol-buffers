@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   s.name        = "ruby-protocol-buffers"
   s.version     = ProtocolBuffers::VERSION
   s.platform    = Gem::Platform::RUBY
-  s.authors     = ["Brian Palmer"]
+  s.authors     = ["Brian Palmer", "Rob Marable", "Paulo Luis Franchini Casaretto"]
   s.email       = ["brian@codekitchen.net"]
   s.homepage    = "https://github.com/mozy/ruby-protocol-buffers"
   s.summary     = %{Ruby compiler and runtime for the google protocol buffers library.}
