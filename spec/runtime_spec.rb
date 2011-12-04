@@ -333,6 +333,16 @@ describe ProtocolBuffers, "runtime" do
     res1 = TehUnknown::MyResult.new(:field_2 => 'b')
 
     proc { res1.to_s }.should raise_error(ProtocolBuffers::EncodeError)
+
+    begin
+      res1.to_s
+    rescue Exception => e
+      e.invalid_field.name.should == :field_1
+      e.invalid_field.tag.should == 1
+      e.invalid_field.otype.should == :required
+      e.invalid_field.default_value.should == ''
+    end
+
   end
 
   it "enforces required fields on deserialization" do
