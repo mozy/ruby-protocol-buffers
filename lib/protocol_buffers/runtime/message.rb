@@ -458,14 +458,25 @@ module ProtocolBuffers
       self.class.valid?(self)
     end
 
-    def self.valid?(message)
+    def self.valid?(message, raise_exception=false)
       return true unless @has_required_field
 
+      invalid_exception = nil
       fields.each do |tag, field|
-        if field.otype == :required
-          return false unless message.value_for_tag?(tag)
+        if field.otype == :required && !message.value_for_tag?(tag)
+          return false unless raise_exception
+          invalid_exception ||= ProtocolBuffers::EncodeError
+          raise(ProtocolBuffers::EncodeError.new(field), "Required field '#{field.name}' is invalid")
         end
       end
+    end
+
+    def validate!
+      self.class.validate!(self)
+    end
+
+    def self.validate!(message)
+      valid?(message, true)
     end
 
     def remember_unknown_field(tag_int, value)
