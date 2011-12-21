@@ -142,7 +142,7 @@ module ProtocolBuffers
           def #{name}=(value)
             field = fields[#{tag}]
             if value.nil?
-              @set_fields.delete_at(#{tag})
+              @set_fields[#{tag}] = false
               @#{name} = field.default_value
             else
               field.check_valid(value)
