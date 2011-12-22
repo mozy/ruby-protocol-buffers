@@ -1,12 +1,16 @@
 module ProtocolBuffers
 
-  class EncodeError < StandardError; end
+  class EncodeError < StandardError
+    attr_reader :invalid_field
+
+    def initialize(invalid_field)
+      @invalid_field = invalid_field
+    end
+  end
 
   module Encoder # :nodoc: all
     def self.encode(io, message)
-      unless message.valid?
-        raise(EncodeError, "invalid message")
-      end
+      message.validate!
 
       message.fields.each do |tag, field|
         next unless message.value_for_tag?(tag)
