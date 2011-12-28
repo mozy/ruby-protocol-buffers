@@ -302,7 +302,7 @@ module ProtocolBuffers
     class SignedVarintField < VarintField
       def deserialize(value)
         # This is to handle negatives...they are always 64-bit
-        if value > ((1 << 63) - 1)
+        if value > max
           value - (1<<64)
         else
           value
