@@ -263,6 +263,18 @@ module ProtocolBuffers
       #
       # Maybe we just punt on this except in Ruby 1.9 where we can rely on the
       # language ensuring the string is always UTF-8?
+
+      def deserialize(value)
+        # To get bytes, the value was being read as ASCII.  Ruby 1.9 stores an encoding
+        # with its strings, and they were getting returned with Encoding ASCII-8BIT.
+        # Protobuffers are supposed to only return UTF-8 strings.  This attempts to
+        # force the encoding to UTF-8 if on Ruby 1.9 (force_encoding is defined on String).
+        read_value = value.read.to_s
+        if read_value.respond_to?("force_encoding")
+          read_value.force_encoding("UTF-8")
+        end
+        read_value
+      end
     end
 
     class NumericField < Field
