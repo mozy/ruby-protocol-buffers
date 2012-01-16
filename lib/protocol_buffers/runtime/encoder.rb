@@ -44,7 +44,7 @@ module ProtocolBuffers
       when 1, 5 # FIXED64, FIXED32
         io.write(serialized)
       when 2 # LENGTH_DELIMITED
-        Varint.encode(io, serialized.length)
+        Varint.encode(io, serialized.bytesize)
         io.write(serialized)
       when 3, 4 # deprecated START_GROUP/END_GROUP types
         raise(EncodeError, "groups are deprecated and unsupported")
