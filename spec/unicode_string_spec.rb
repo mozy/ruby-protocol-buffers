@@ -28,7 +28,6 @@ describe "Testing for bugs in Unicode encoding and decoding" do
   # with their encoding set to ASCII.  The new code forces it to UTF-8.
   it "should return the given Unicode string" do
     string_with_r = "(R) Char: \u00AE"
-    puts "string_with_r.encoding: #{string_with_r.encoding}" if string_with_r.respond_to? "encoding"
     validate_pbr(StringTest, string_with_r, true).should be_true
   end
 end
