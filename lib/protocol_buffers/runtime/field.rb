@@ -533,6 +533,8 @@ module ProtocolBuffers
 
     class MessageField < Field
       include WireFormats::LENGTH_DELIMITED
+      
+      attr_reader :proxy_class
 
       def initialize(proxy_class, otype, name, tag, opts = {})
         super(otype, name, tag, opts)

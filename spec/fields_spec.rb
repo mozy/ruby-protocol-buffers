@@ -46,4 +46,8 @@ describe ProtocolBuffers, "fields" do
     end
   end
 
+  it "provides a reader for proxy_class on message fields" do
+    ProtocolBuffers::Field::MessageField.new(nil, :optional, :fake_name, 1).should respond_to(:proxy_class)
+    ProtocolBuffers::Field::MessageField.new(Class, :optional, :fake_name, 1).proxy_class.should == Class
+  end
 end
