@@ -233,21 +233,15 @@ module ProtocolBuffers
     #   message.attributes = attributes
     def initialize(attributes = {})
       @set_fields = []
-
       fields.each do |tag, field|
+        # repeated fields are always "set"
         if field.repeated?
+          @set_fields[tag] = true
+          # TODO: it seems a shame to do this on every object initialization,
+          # even if the repeated fields are never accessed
           self.instance_variable_set("@#{field.name}", RepeatedField.new(field))
-          @set_fields[tag] = true # repeated fields are always "set"
-        else
-          value = field.default_value
-          self.__send__("#{field.name}=", value)
-          @set_fields[tag] = false
-          if field.class == Field::MessageField
-            value.notify_on_change(self, tag)
-          end
         end
       end
-
       self.attributes = attributes
     end
 
@@ -500,6 +494,18 @@ module ProtocolBuffers
       # these generated methods have gone away for now -- the infrastructure has
       # been left in place, since they'll probably make their way back in at
       # some point.
+    end
+
+    protected
+
+    def initialize_field(tag)
+      field = fields[tag]
+      new_value = field.default_value
+      self.instance_variable_set("@#{field.name}", new_value)
+      if field.class == Field::MessageField
+        new_value.notify_on_change(self, tag)
+      end
+      @set_fields[tag] = false
     end
 
   end

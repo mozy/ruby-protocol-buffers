@@ -120,12 +120,43 @@ module ProtocolBuffers
       @opts = opts.dup
     end
 
-    def add_methods_to(klass)
+    def add_reader_to(klass)
       klass.class_eval <<-EOF, __FILE__, __LINE__+1
-        attr_reader :#{name}
+      def #{name}
+        if @set_fields[#{tag}] == nil
+          # first access of this field, generate it
+          initialize_field(#{tag})
+        end
+        @#{name}
+      end
       EOF
+    end
+
+    def add_writer_to(klass)
+      klass.class_eval <<-EOF, __FILE__, __LINE__+1
+        def #{name}=(value)
+          field = fields[#{tag}]
+          if value.nil?
+            @set_fields[#{tag}] = false
+            @#{name} = field.default_value
+          else
+            field.check_valid(value)
+            @set_fields[#{tag}] = true
+            @#{name} = value
+            if @parent_for_notify
+              @parent_for_notify.default_changed(@tag_for_notify)
+              @parent_for_notify = @tag_for_notify = nil
+            end
+          end
+        end
+      EOF
+    end
+
+    def add_methods_to(klass)
       if repeated?
         klass.class_eval <<-EOF, __FILE__, __LINE__+1
+          attr_reader :#{name}
+
           def #{name}=(value)
             if value.nil?
               @#{name}.clear
@@ -138,23 +169,10 @@ module ProtocolBuffers
           def has_#{name}?; true; end
         EOF
       else
-        klass.class_eval <<-EOF, __FILE__, __LINE__+1
-          def #{name}=(value)
-            field = fields[#{tag}]
-            if value.nil?
-              @set_fields[#{tag}] = false
-              @#{name} = field.default_value
-            else
-              field.check_valid(value)
-              @set_fields[#{tag}] = true
-              @#{name} = value
-              if @parent_for_notify
-                @parent_for_notify.default_changed(@tag_for_notify)
-                @parent_for_notify = @tag_for_notify = nil
-              end
-            end
-          end
+        add_reader_to(klass)
+        add_writer_to(klass)
 
+        klass.class_eval <<-EOF, __FILE__, __LINE__+1
           def has_#{name}?
             value_for_tag?(#{tag})
           end

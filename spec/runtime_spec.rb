@@ -81,6 +81,45 @@ describe ProtocolBuffers, "runtime" do
     a1.sub2.has_subsub1?.should == true
   end
 
+  it "allows directly recursive sub-messages" do
+    ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
+     package foo;
+      message Foo {
+        optional int32 payload = 1;
+        optional Foo foo = 2;
+      }
+    EOS
+
+    foo = Foo::Foo.new
+    foo.has_foo?.should == false
+    foo.foo.payload = 17
+    foo.has_foo?.should == true
+    foo.foo.has_foo?.should == false
+  end
+
+  it "allows indirectly recursive sub-messages" do
+    ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
+     package foo;
+      message Foo {
+        optional int32 payload = 1;
+        optional Bar bar = 2;
+      }
+
+      message Bar {
+        optional Foo foo = 1;
+        optional int32 payload = 2;
+      }
+    EOS
+
+    foo = Foo::Foo.new
+    foo.has_bar?.should == false
+    foo.bar.payload = 17
+    foo.has_bar?.should == true
+    foo.bar.has_foo?.should == false
+    foo.bar.foo.payload = 23
+    foo.bar.has_foo?.should == true
+  end
+
   it "pretends that repeated fields are arrays" do
     # make sure our RepeatedField class acts like a normal Array
     ProtocolBuffers::Compiler.compile_and_load_string <<-EOS
