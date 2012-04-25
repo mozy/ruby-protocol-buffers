@@ -412,7 +412,6 @@ module ProtocolBuffers
     end
 
     def self.define_field(otype, type, name, tag, opts = {}) # :NODOC:
-      raise("gen_methods! already called, cannot add more fields") if @methods_generated
       type = type.is_a?(Module) ? type : type.to_sym
       name = name.to_sym
       tag  = tag.to_i
@@ -486,14 +485,9 @@ module ProtocolBuffers
       (@unknown_fields || []).size
     end
 
-    # Generate the initialize method using reflection, to improve speed. This is
-    # called by the generated .pb.rb code, it's not necessary to call this
-    # method directly.
+    # left in for compatibility with previously created .pb.rb files -- no longer used
     def self.gen_methods! # :NODOC:
       @methods_generated = true
-      # these generated methods have gone away for now -- the infrastructure has
-      # been left in place, since they'll probably make their way back in at
-      # some point.
     end
 
     protected

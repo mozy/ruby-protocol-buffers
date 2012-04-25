@@ -128,9 +128,6 @@ HEADER
         end
         line fieldline
       end
-
-      line
-      line "gen_methods! # new fields ignored after this point"
     end
     line
   end

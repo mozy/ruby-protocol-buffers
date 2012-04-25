@@ -278,10 +278,8 @@ describe ProtocolBuffers, "runtime" do
     sub.payload.should == ""
   end
 
-  it "doesn't allow defining fields after gen_methods is called" do
-    proc do
-      A.define_field(:optional, :string, "newfield", 15)
-    end.should raise_error()
+  it "responds to gen_methods! for backwards compat" do
+    A.gen_methods!
   end
 
   def filled_in_bit
