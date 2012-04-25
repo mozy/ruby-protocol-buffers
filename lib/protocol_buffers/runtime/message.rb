@@ -455,11 +455,13 @@ module ProtocolBuffers
       return true unless @has_required_field
 
       fields.each do |tag, field|
-        if field.otype == :required && !message.value_for_tag?(tag)
-          return false unless raise_exception
-          raise(ProtocolBuffers::EncodeError.new(field), "Required field '#{field.name}' is invalid")
-        end
+        next if field.otype != :required
+        next if message.value_for_tag?(tag) && (field.class != Field::MessageField || message.value_for_tag(tag).valid?)
+        return false unless raise_exception
+        raise(ProtocolBuffers::EncodeError.new(field), "Required field '#{field.name}' is invalid")
       end
+
+      true
     end
 
     def validate!

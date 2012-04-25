@@ -533,16 +533,29 @@ describe ProtocolBuffers, "runtime" do
     res3 = TehUnknown3::MyResult.parse(serialized2)
     res3.field_1.should == 2
   end
-  
+
   it "can compile and instantiate a message in a package with under_scores" do
     Object.send(:remove_const, :UnderScore) if defined?(UnderScore)
-    
+
     ProtocolBuffers::Compiler.compile_and_load(
       File.join(File.dirname(__FILE__), "proto_files", "under_score_package.proto"))
-      
+
     proc do
       under_test = UnderScore::UnderTest.new
     end.should_not raise_error()
+  end
+
+  describe "Message#valid?" do
+    it "should validate sub-messages" do
+      f = Featureful::A.new
+      f.i3 = 1
+      f.sub3 = Featureful::A::Sub.new
+      f.valid?.should == false
+      f.sub3.valid?.should == false
+      f.sub3.payload_type = Featureful::A::Sub::Payloads::P1
+      f.valid?.should == true
+      f.sub3.valid?.should == true
+    end
   end
 
 end
