@@ -232,16 +232,7 @@ module ProtocolBuffers
     #   message = MyMessageClass.new
     #   message.attributes = attributes
     def initialize(attributes = {})
-      @set_fields = []
-      fields.each do |tag, field|
-        # repeated fields are always "set"
-        if field.repeated?
-          @set_fields[tag] = true
-          # TODO: it seems a shame to do this on every object initialization,
-          # even if the repeated fields are never accessed
-          self.instance_variable_set("@#{field.name}", RepeatedField.new(field))
-        end
-      end
+      @set_fields = self.class.initial_set_fields.dup
       self.attributes = attributes
     end
 
@@ -346,6 +337,10 @@ module ProtocolBuffers
     # Returns a hash of { tag => ProtocolBuffers::Field }
     def self.fields
       @fields || @fields = {}
+    end
+
+    def self.initial_set_fields
+      @set_fields ||= []
     end
 
     # Returns a hash of { tag => ProtocolBuffers::Field }

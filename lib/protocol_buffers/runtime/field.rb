@@ -121,57 +121,73 @@ module ProtocolBuffers
     end
 
     def add_reader_to(klass)
-      klass.class_eval <<-EOF, __FILE__, __LINE__+1
-      def #{name}
-        if @set_fields[#{tag}] == nil
-          # first access of this field, generate it
-          initialize_field(#{tag})
+      if repeated?
+        klass.class_eval <<-EOF, __FILE__, __LINE__+1
+        def #{name}
+          unless @#{name}
+            @#{name} = RepeatedField.new(fields[#{tag}])
+          end
+          @#{name}
         end
-        @#{name}
+        EOF
+      else
+        klass.class_eval <<-EOF, __FILE__, __LINE__+1
+        def #{name}
+          if @set_fields[#{tag}] == nil
+            # first access of this field, generate it
+            initialize_field(#{tag})
+          end
+          @#{name}
+        end
+        EOF
       end
-      EOF
     end
 
     def add_writer_to(klass)
-      klass.class_eval <<-EOF, __FILE__, __LINE__+1
-        def #{name}=(value)
-          field = fields[#{tag}]
-          if value.nil?
-            @set_fields[#{tag}] = false
-            @#{name} = field.default_value
-          else
-            field.check_valid(value)
-            @set_fields[#{tag}] = true
-            @#{name} = value
-            if @parent_for_notify
-              @parent_for_notify.default_changed(@tag_for_notify)
-              @parent_for_notify = @tag_for_notify = nil
-            end
-          end
-        end
-      EOF
-    end
-
-    def add_methods_to(klass)
       if repeated?
         klass.class_eval <<-EOF, __FILE__, __LINE__+1
-          attr_reader :#{name}
-
           def #{name}=(value)
             if value.nil?
-              @#{name}.clear
+              #{name}.clear
             else
-              @#{name}.clear
+              #{name}.clear
               value.each { |i| @#{name}.push i }
             end
           end
+        EOF
+      else
+        klass.class_eval <<-EOF, __FILE__, __LINE__+1
+          def #{name}=(value)
+            field = fields[#{tag}]
+            if value.nil?
+              @set_fields[#{tag}] = false
+              @#{name} = field.default_value
+            else
+              field.check_valid(value)
+              @set_fields[#{tag}] = true
+              @#{name} = value
+              if @parent_for_notify
+                @parent_for_notify.default_changed(@tag_for_notify)
+                @parent_for_notify = @tag_for_notify = nil
+              end
+            end
+          end
+        EOF
+      end
+    end
 
+    def add_methods_to(klass)
+      add_reader_to(klass)
+      add_writer_to(klass)
+
+      if repeated?
+        # repeated fields are always "set"
+        klass.initial_set_fields[tag] = true
+
+        klass.class_eval <<-EOF, __FILE__, __LINE__+1
           def has_#{name}?; true; end
         EOF
       else
-        add_reader_to(klass)
-        add_writer_to(klass)
-
         klass.class_eval <<-EOF, __FILE__, __LINE__+1
           def has_#{name}?
             value_for_tag?(#{tag})
