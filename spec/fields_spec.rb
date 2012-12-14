@@ -37,12 +37,24 @@ describe ProtocolBuffers, "fields" do
   end
 
   it "verifies UTF-8 for string fields" do
-    pending("do UTF-8 validation") do
+    if RUBY_VERSION < "1.9"
+      pending "UTF-8 validation only happens in ruby 1.9+"
+    else
+      good = proc { StringIO.new("hello") }
+      bad  = proc { StringIO.new("\xff\xff") }
+
       s1 = mkfield(:StringField)
-      proc { s1.check_valid("hello") }.should_not raise_error()
-      proc { s1.check_valid("\xff\xff") }.should raise_error(ArgumentError)
+      s1.deserialize(good[]).should == "hello"
+      s1.deserialize(good[]).encoding.should == Encoding.find('utf-8')
+      proc { s1.check_valid(s1.deserialize(good[])) }.should_not raise_error()
+      s1.deserialize(bad[]).encoding.should == Encoding.find('utf-8')
+      proc { s1.check_valid(s1.deserialize(bad[])) }.should raise_error(ArgumentError)
+
       b1 = mkfield(:BytesField)
-      proc { b1.check_valid("\xff\xff") }.should_not raise_error()
+      b1.deserialize(good[]).should == "hello"
+      b1.deserialize(good[]).encoding.should == Encoding.find("us-ascii")
+      b1.deserialize(bad[]).encoding.should == Encoding.find("binary")
+      proc { b1.check_valid(b1.deserialize(bad[])) }.should_not raise_error()
     end
   end
 
