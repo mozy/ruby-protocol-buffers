@@ -65,6 +65,15 @@ describe ProtocolBuffers, "runtime" do
     a1.has_sub2?.should == true
   end
 
+  describe "#inspect" do
+    it "should leave out un-set fields" do
+      b1 = Simple::Bar.new
+      b1.inspect.should == "#<Simple::Bar foo=<unset>>"
+      b1.foo = Simple::Foo.new
+      b1.inspect.should == "#<Simple::Bar foo=#<Simple::Foo>>"
+    end
+  end
+
   it "detects changes to a sub-message and flags it as set if it wasn't" do
     a1 = Featureful::A.new
     a1.has_sub2?.should == false
