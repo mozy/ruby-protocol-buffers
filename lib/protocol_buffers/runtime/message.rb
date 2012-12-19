@@ -209,7 +209,7 @@ module ProtocolBuffers
   #   module Foo
   #     VALUE_A = 1
   #     VALUE_B = 5
-  #     VALUE_C 1234
+  #     VALUE_C = 1234
   #   end
   #
   # An exception will be thrown if an enum field is assigned a value not in the
