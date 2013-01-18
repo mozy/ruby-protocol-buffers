@@ -18,9 +18,10 @@ Gem::Specification.new do |s|
 
   s.extra_rdoc_files << "Changelog.md"
 
-  s.add_development_dependency "rspec", "~> 2.5"
   s.add_development_dependency "autotest-standalone"
   s.add_development_dependency "autotest-growl"
+  s.add_development_dependency "rake"
   s.add_development_dependency "rcov"
+  s.add_development_dependency "rspec", "~> 2.5"
   s.add_development_dependency "yard"
 end
